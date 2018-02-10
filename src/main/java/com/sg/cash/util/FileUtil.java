@@ -21,9 +21,11 @@ public class FileUtil {
         if (outDir.exists() && outDir.isDirectory()) {
             File[] outFileList = outDir.listFiles();
             for (File file : outFileList) {
-                if (file.exists())
-                    if (!file.delete())
+                if (file.exists()) {
+                    if (!file.delete()) {
                         throw new FileNotFoundException("delete output file failed!");
+                    }
+                }
             }
         }
     }
