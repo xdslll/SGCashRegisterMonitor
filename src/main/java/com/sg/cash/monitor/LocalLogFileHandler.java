@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 处理日志文件，包括：
@@ -18,9 +19,9 @@ import java.io.*;
  * @author xdslll
  * @date 2018/2/8
  **/
-public class LogFileHandler {
+public class LocalLogFileHandler {
 
-    private static final Log logger = LogFactory.getLog(LogFileHandler.class);
+    private static final Log logger = LogFactory.getLog(LocalLogFileHandler.class);
     /**
      * 日志输入的文件夹
      */
@@ -31,28 +32,25 @@ public class LogFileHandler {
      */
     private String logFileOutPath;
 
-    public LogFileHandler(String logFileInPath, String logFileOutPath) {
+    public LocalLogFileHandler(String logFileInPath, String logFileOutPath) {
         this.logFileInPath = logFileInPath;
         this.logFileOutPath = logFileOutPath;
     }
 
-    /**
-     * 将输入文件夹下的文件拷贝至输出文件夹（编码格式转换）
-     * @throws FileNotFoundException
-     */
-    public void copyLogFile() throws IOException {
+    public void copyLogFileAndConvertToUTF8() throws IOException {
         File inDir = new File(logFileInPath);
         File outDir = new File(logFileOutPath);
         //如果输入文件夹不存在，直接抛异常
         if (!inDir.exists()) {
             throw new FileNotFoundException("input path is not exist!");
         }
+        //清空原有的输出文件
+        FileUtil.cleanOutputFile(outDir);
         //如果输出文件夹不存在，创建
         if (!outDir.exists()) {
             outDir.mkdirs();
         }
-        //清空原有的输出文件
-        FileUtil.cleanOutputFile(outDir);
+        //FileUtil.copyDir(inDir, outDir);
         //判断源文件不能为空
         File[] inFileList = inDir.listFiles();
         if (inFileList == null || inFileList.length == 0) {
@@ -81,34 +79,7 @@ public class LogFileHandler {
         LogUtil.info(logger, "index=" + index);
     }
 
-    /**
-     * 检验文件是否存在并且是否一致
-     */
-    public void checkFile() throws IOException {
-        File inDir = new File(logFileInPath);
-        File outDir = new File(logFileOutPath);
-        if (!inDir.exists() || !outDir.exists()) {
-            throw new FileNotFoundException();
-        }
-        if (inDir.listFiles() == null || outDir.listFiles() == null) {
-            throw new FileNotFoundException();
-        }
-        int passCount = 0;
-        int failedCount = 0;
-        for (File inFile : inDir.listFiles()) {
-            for (File outFile : outDir.listFiles()) {
-                if (checkFileLine(inFile, outFile)) {
-                    passCount++;
-                    break;
-                } else {
-                    failedCount++;
-                }
-            }
-        }
-        LogUtil.info(logger, "pass count:" + passCount + ",failed count:" + failedCount);
-    }
-
-    private boolean checkFileLine(File inFile, File outFile) throws IOException {
+    protected boolean checkFileLine(File inFile, File outFile) throws IOException {
         BufferedReader inBr = null;
         BufferedReader outBr = null;
         try {
@@ -127,6 +98,7 @@ public class LogFileHandler {
             while (outBr.readLine() != null) {
                 outLine++;
             }
+            System.out.print("file[" + inFileName + "]\tinline=" + inLine + ",outline=" + outLine);
             if (inLine == outLine) {
                 return true;
             } else {
@@ -144,48 +116,31 @@ public class LogFileHandler {
 
     public void checkFileAmount() throws IOException {
         File outDir = new File(logFileOutPath);
-        checkFile(outDir);
+        File inDir = new File(logFileInPath);
+        //检查文件数量是否一致
+        int originalFileCount = new File(logFileInPath).listFiles().length;
+        AtomicInteger newFileCount = new AtomicInteger();
+        FileUtil.checkFile(outDir, inDir, (originalFile, newFile) -> newFileCount.addAndGet(1));
+        LogUtil.info(logger, "original file count:" + originalFileCount + ",new file count:" + newFileCount.get());
+        LogUtil.info(logger, "count test:\t" + (originalFileCount == newFileCount.get() ? "pass" : "failed"));
     }
 
-    /**
-     * 通过迭代方法检查文件的准确性
-     *
-     * @param file
-     * @throws IOException
-     */
-    public void checkFile(File file) throws IOException {
-        //判断是否为文件夹
-        if (file != null && file.isDirectory()) {
-            //列出文件夹下的所有文件
-            File[] fileList = file.listFiles();
-            //如果文件不存在，直接退出
-            if (fileList == null || fileList.length == 0) {
-                return;
-            }
-            //循环检查文件
-            for (File subFile : fileList) {
-                checkFile(subFile);
-            }
-        }
-        //判断是否为文件
-        else if (file != null && file.isFile()) {
-            //获取文件夹
-            String fileName = FileUtil.getFileName(file);
-            //在源文件夹下获取同名文件
-            File originalFile = new File(logFileInPath, fileName);
-            //判断源文件是否存在
-            if (!originalFile.exists()) {
-                return;
-            }
-            //重命名变量，更易理解
-            File newFile = file;
-            //检查两个文件的行数是否一致
+    public void checkFileLine() throws IOException {
+        File outDir = new File(logFileOutPath);
+        File inDir = new File(logFileInPath);
+        AtomicInteger pass = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
+        FileUtil.checkFile(outDir, inDir, (originalFile, newFile) -> {
+            //检查剪切后的文件与源文件的行数是否一致
             if (checkFileLine(originalFile, newFile)) {
-                System.out.println("file[" + originalFile + "]\tpass");
+                System.out.print("\tpass\n");
+                pass.addAndGet(1);
+            } else {
+                System.out.print("\tfailed\n");
+                failed.addAndGet(1);
             }
-        } else {
-            throw new FileNotFoundException("unknown file!");
-        }
+        });
+        LogUtil.info(logger, "line test:pass=" + pass.get() + ",failed=" + failed.get());
     }
 
     /**
@@ -209,17 +164,7 @@ public class LogFileHandler {
             File oldFile = file;
             File newFile = new File(newDir.getDir(), fileName);
             //将文件移动至新文件夹下
-            FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[1024 * 10];
-            FileOutputStream fos = new FileOutputStream(newFile);
-            while (fis.read(buffer) != -1) {
-                fos.write(buffer);
-            }
-            fos.flush();
-            fis.close();
-            fos.close();
-            //删除老文件
-            oldFile.delete();
+            FileUtil.moveFile(oldFile, newFile);
         }
     }
 
@@ -242,7 +187,6 @@ public class LogFileHandler {
             logDir.setStoreCode(storeCode);
             logDir.setMonth(sMonth);
             logDir.setYear(sYear);
-            //System.out.println(logDir);
         }
         return logDir;
     }

@@ -21,43 +21,49 @@ import java.io.IOException;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class LogDirHandlerTest {
 
-    private LogFileHandler logFileHandler;
+    private LocalLogFileHandler localLogFileHandler;
     private static final Log logger = LogFactory.getLog(LogDirHandlerTest.class);
 
     @Before
     public void prepare() {
         String OsName = System.getProperty("os.name");
+        LogUtil.info(logger, OsName);
         if (OsName.matches("^Mac.*")) {
-            LogUtil.info(logger, "macos system");
             String inPath = "/Users/apple/Desktop/JKreport";
             String outPath = "/Users/apple/Desktop/JKreport2";
-            logFileHandler = new LogFileHandler(inPath, outPath);
+            localLogFileHandler = new LocalLogFileHandler(inPath, outPath);
         } else {
-            LogUtil.info(logger, "windows system");
             String inPath = "E:/Project/SgCashRegisterMonitor/JKreport";
             String outPath = "E:/Project/SgCashRegisterMonitor/JKreport2";
-            logFileHandler = new LogFileHandler(inPath, outPath);
+            localLogFileHandler = new LocalLogFileHandler(inPath, outPath);
         }
     }
 
     @Test
     public void test1CopyFile() throws IOException {
-        //logFileHandler.copyLogFile();
+        //localLogFileHandler.copyLogFileAndConvertToUTF8();
+        //localLogFileHandler.checkFileAmount();
+        //localLogFileHandler.checkFileLine();
     }
 
     @Test
     public void test2PartitionFile() throws IOException {
-        //logFileHandler.partitionFile();
+        //localLogFileHandler.copyLogFileAndConvertToUTF8();
+        //localLogFileHandler.partitionFile();
+        //localLogFileHandler.checkFileAmount();
+        //localLogFileHandler.checkFileLine();
     }
 
     @Test
     public void test3CheckFile() throws IOException {
-        //logFileHandler.checkFile();
-        logFileHandler.checkFileAmount();
+        //localLogFileHandler.checkFile();
+        //localLogFileHandler.checkFileAmount();
     }
 
     @After
     public void clean() throws FileNotFoundException {
-        //FileUtil.cleanOutputFile(logFileHandler.getLogFileOutPath());
+        //FileUtil.cleanOutputFile(localLogFileHandler.getLogFileOutPath());
     }
+
+
 }
