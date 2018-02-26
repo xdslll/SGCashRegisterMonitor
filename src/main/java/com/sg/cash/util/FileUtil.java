@@ -61,22 +61,6 @@ public class FileUtil {
     }
 
     /**
-     * 获取文件名
-     *
-     * @param file
-     * @return
-     */
-    public static String getFileName(File file) {
-        String filePath = file.getAbsolutePath();
-        filePath = filePath.replaceAll("\\\\", "/");
-        if (filePath.contains("/")) {
-            int index = filePath.lastIndexOf("/");
-            return filePath.substring(index + 1, filePath.length());
-        }
-        return null;
-    }
-
-    /**
      * 剪切文件
      *
      * @param oldFile   原文件路径
@@ -108,7 +92,7 @@ public class FileUtil {
     }
 
     public static void moveFile(File oldFile, File newFile) throws IOException {
-        moveFile(oldFile, newFile, true, true);
+        moveFile(oldFile, newFile, false, true);
     }
 
     public static void moveFile(String oldFilePath, String newFilePath) throws IOException {
@@ -121,49 +105,6 @@ public class FileUtil {
 
     public static void copyFile(File oldFile, File newFile) throws IOException {
         moveFile(oldFile, newFile, true, false);
-    }
-
-    /**
-     * 将输入文件夹下的文件拷贝至输出文件夹并转换编码格式
-     * @throws FileNotFoundException
-     */
-    public static void copyLogFileAndConvertToUTF8(File inDir, File outDir) throws IOException {
-        //如果输入文件夹不存在，直接抛异常
-        if (!inDir.exists()) {
-            throw new FileNotFoundException("input path is not exist!");
-        }
-        //清空原有的输出文件
-        FileUtil.cleanOutputFile(outDir);
-        //如果输出文件夹不存在，创建
-        if (!outDir.exists()) {
-            outDir.mkdirs();
-        }
-        //判断源文件不能为空
-        File[] inFileList = inDir.listFiles();
-        if (inFileList == null || inFileList.length == 0) {
-            return;
-        }
-        //源文件数量
-        int index = 0;
-        //拷贝文件
-        for (File inFile : inFileList) {
-            String fileName = FileUtil.getFileName(inFile);
-            FileInputStream fis = new FileInputStream(inFile);
-            FileOutputStream fos = new FileOutputStream(new File(outDir, fileName));
-            byte[] buffer = new byte[(int) inFile.length()];
-            int hasRead = fis.read(buffer);
-            if (hasRead != inFile.length()) {
-                throw new FileLoadException("file cannot load once...");
-            }
-            fos.write(new String(buffer, "GBK").getBytes());
-            fos.flush();
-            fis.close();
-            fos.close();
-            index++;
-            LogUtil.debug(logger, "file[" + fileName + "] is copied successfully.");
-
-        }
-        LogUtil.info(logger, "index=" + index);
     }
 
     /**
@@ -191,7 +132,7 @@ public class FileUtil {
         //判断是否为文件
         else if (checkFile != null && checkFile.isFile()) {
             //获取文件夹
-            String fileName = FileUtil.getFileName(checkFile);
+            String fileName = checkFile.getName();
             if (fileName == null) {
                 return;
             }
@@ -285,6 +226,12 @@ public class FileUtil {
         return true;
     }
 
+    /**
+     * 只保留文件夹，删除文件夹内的所有文件
+     *
+     * @param fileArray
+     * @return
+     */
     private static List<File> pickUpDirectories(File[] fileArray) {
         ArrayList<File> fileList = new ArrayList<>(Arrays.asList(fileArray));
         Iterator<File> it = fileList.iterator();
@@ -294,5 +241,27 @@ public class FileUtil {
             }
         }
         return fileList;
+    }
+
+    /**
+     * 一次性拷贝文件（适用于小文件，效率高）
+     *
+     * @param oldFile
+     * @param newFile
+     * @throws IOException
+     */
+    public static void copyFileOnce(File oldFile, File newFile) throws IOException {
+        FileInputStream fis = new FileInputStream(oldFile);
+        FileOutputStream fos = new FileOutputStream(newFile);
+        byte[] buffer = new byte[(int) oldFile.length()];
+        int hasRead = fis.read(buffer);
+        if (hasRead != oldFile.length()) {
+            throw new FileLoadException("file cannot load once...");
+        }
+        fos.write(new String(buffer, "GBK").getBytes());
+        fos.flush();
+        fis.close();
+        fos.close();
+        LogUtil.debug(logger, "file[" + oldFile.getName() + "] is copied successfully.");
     }
 }

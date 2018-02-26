@@ -3,12 +3,11 @@ package com.sg.cash.monitor;
 import com.sg.cash.util.LogUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
+import org.junit.*;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -42,22 +41,26 @@ public class LogDirHandlerTest {
     @Test
     public void test1CopyFile() throws IOException {
         //localLogFileHandler.copyLogFileAndConvertToUTF8();
-        //localLogFileHandler.checkFileAmount();
-        //localLogFileHandler.checkFileLine();
     }
 
     @Test
     public void test2PartitionFile() throws IOException {
-        //localLogFileHandler.copyLogFileAndConvertToUTF8();
+        //复制文件
+        localLogFileHandler.copyLogFileAndConvertToUTF8();
+        //检查两个文件夹下的文件总数量是否一致
+        File inDir = localLogFileHandler.getInDir();
+        File outDir = localLogFileHandler.getOutDir();
+        Assert.assertNotNull(inDir);
+        Assert.assertNotNull(outDir);
+        Assert.assertTrue(inDir.listFiles().length == outDir.listFiles().length);
+
         //localLogFileHandler.partitionFile();
-        //localLogFileHandler.checkFileAmount();
-        //localLogFileHandler.checkFileLine();
     }
 
     @Test
     public void test3CheckFile() throws IOException {
-        //localLogFileHandler.checkFile();
         //localLogFileHandler.checkFileAmount();
+        //localLogFileHandler.checkFileLine();
     }
 
     @After

@@ -22,12 +22,14 @@ public class LogUtil {
     }
 
     public static void debug(Log logger, Object o) {
-        if (canDebug())
+        if (canDebug()) {
             logger.debug(o);
+        }
     }
 
     public static void info(Log logger, Object o) {
-        if (canInfo())
+        if (canInfo()) {
             logger.info(o);
+        }
     }
 }

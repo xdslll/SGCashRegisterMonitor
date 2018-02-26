@@ -8,6 +8,10 @@
     <artifactId>sg-cash-monitor</artifactId>
     <version>1.0</version>
 
+    <properties>
+        <hadoop.version>2.7.3</hadoop.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -21,8 +25,12 @@
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

@@ -22,35 +22,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LocalLogFileHandler {
 
     private static final Log logger = LogFactory.getLog(LocalLogFileHandler.class);
+
     /**
      * 日志输入的文件夹
      */
-    private String logFileInPath;
+    private File inDir;
 
     /**
-     * 日志输出的文件夹
+     * 日志输出的文件夹路径
      */
-    private String logFileOutPath;
+    private File outDir;
 
     public LocalLogFileHandler(String logFileInPath, String logFileOutPath) {
-        this.logFileInPath = logFileInPath;
-        this.logFileOutPath = logFileOutPath;
+        this.inDir = new File(logFileInPath);
+        this.outDir = new File(logFileOutPath);
     }
 
+    /**
+     * 从输入文件夹拷贝所有文件到输出文件夹
+     *
+     * @throws IOException
+     */
     public void copyLogFileAndConvertToUTF8() throws IOException {
-        File inDir = new File(logFileInPath);
-        File outDir = new File(logFileOutPath);
         //如果输入文件夹不存在，直接抛异常
         if (!inDir.exists()) {
             throw new FileNotFoundException("input path is not exist!");
         }
         //清空原有的输出文件
-        FileUtil.cleanOutputFile(outDir);
-        //如果输出文件夹不存在，创建
+        //FileUtil.cleanOutputFile(outDir);
+
         if (!outDir.exists()) {
-            outDir.mkdirs();
+            if (!outDir.mkdirs()) {
+                throw new FileNotFoundException("create output path error!");
+            }
         }
-        //FileUtil.copyDir(inDir, outDir);
         //判断源文件不能为空
         File[] inFileList = inDir.listFiles();
         if (inFileList == null || inFileList.length == 0) {
@@ -59,32 +64,35 @@ public class LocalLogFileHandler {
         //源文件数量
         int index = 0;
         //拷贝文件
-        for (File inFile : inFileList) {
-            String fileName = FileUtil.getFileName(inFile);
-            FileInputStream fis = new FileInputStream(inFile);
-            FileOutputStream fos = new FileOutputStream(new File(outDir, fileName));
-            byte[] buffer = new byte[(int) inFile.length()];
-            int hasRead = fis.read(buffer);
-            if (hasRead != inFile.length()) {
-                throw new FileLoadException("file cannot load once...");
+        for (File oldFile : inFileList) {
+            //获取文件名，创建新文件
+            String fileName = oldFile.getName();
+            File newFile = new File(outDir, fileName);
+            if (newFile.exists()) {
+                //判断新文件和老文件是否一致，如果一致就不需要更新，如果新文件更新，那么就更新
+                long oldModified = oldFile.lastModified();
+                long newModified = newFile.lastModified();
+                if (oldModified > newModified) {
+                    FileUtil.copyFileOnce(oldFile, newFile);
+                    index++;
+                }
+            } else {
+                FileUtil.copyFileOnce(oldFile, newFile);
+                index++;
             }
-            fos.write(new String(buffer, "GBK").getBytes());
-            fos.flush();
-            fis.close();
-            fos.close();
-            index++;
-            LogUtil.debug(logger, "file[" + fileName + "] is copied successfully.");
-
         }
         LogUtil.info(logger, "index=" + index);
     }
+
+
+
 
     protected boolean checkFileLine(File inFile, File outFile) throws IOException {
         BufferedReader inBr = null;
         BufferedReader outBr = null;
         try {
-            String inFileName = FileUtil.getFileName(inFile);
-            String outFileName = FileUtil.getFileName(outFile);
+            String inFileName = inFile.getName();
+            String outFileName = outFile.getName();
             if (!inFileName.equals(outFileName)) {
                 return false;
             }
@@ -115,10 +123,8 @@ public class LocalLogFileHandler {
     }
 
     public void checkFileAmount() throws IOException {
-        File outDir = new File(logFileOutPath);
-        File inDir = new File(logFileInPath);
         //检查文件数量是否一致
-        int originalFileCount = new File(logFileInPath).listFiles().length;
+        int originalFileCount = inDir.listFiles().length;
         AtomicInteger newFileCount = new AtomicInteger();
         FileUtil.checkFile(outDir, inDir, (originalFile, newFile) -> newFileCount.addAndGet(1));
         LogUtil.info(logger, "original file count:" + originalFileCount + ",new file count:" + newFileCount.get());
@@ -126,8 +132,6 @@ public class LocalLogFileHandler {
     }
 
     public void checkFileLine() throws IOException {
-        File outDir = new File(logFileOutPath);
-        File inDir = new File(logFileInPath);
         AtomicInteger pass = new AtomicInteger();
         AtomicInteger failed = new AtomicInteger();
         FileUtil.checkFile(outDir, inDir, (originalFile, newFile) -> {
@@ -147,14 +151,13 @@ public class LocalLogFileHandler {
      * 对文件进行分区
      */
     public void partitionFile() throws IOException {
-        File outDir = new File(logFileOutPath);
         File[] outFileList = outDir.listFiles();
         if (outFileList == null || outFileList.length == 0) {
             return;
         }
         //分区逻辑：年/月/店号/工号
         for (File file : outFileList) {
-            String fileName = FileUtil.getFileName(file);
+            String fileName = file.getName();
             if (fileName == null || !fileName.contains("_")) {
                 continue;
             }
@@ -163,7 +166,7 @@ public class LocalLogFileHandler {
             newDir.mkdir(outDir);
             File oldFile = file;
             File newFile = new File(newDir.getDir(), fileName);
-            //将文件移动至新文件夹下
+            //对文件进行分区，删除原文件
             FileUtil.moveFile(oldFile, newFile);
         }
     }
@@ -191,19 +194,19 @@ public class LocalLogFileHandler {
         return logDir;
     }
 
-    public String getLogFileInPath() {
-        return logFileInPath;
+    public File getInDir() {
+        return inDir;
     }
 
-    public void setLogFileInPath(String logFileInPath) {
-        this.logFileInPath = logFileInPath;
+    public void setInDir(File inDir) {
+        this.inDir = inDir;
     }
 
-    public String getLogFileOutPath() {
-        return logFileOutPath;
+    public File getOutDir() {
+        return outDir;
     }
 
-    public void setLogFileOutPath(String logFileOutPath) {
-        this.logFileOutPath = logFileOutPath;
+    public void setOutDir(File outDir) {
+        this.outDir = outDir;
     }
 }

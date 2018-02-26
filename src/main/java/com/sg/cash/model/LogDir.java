@@ -51,18 +51,20 @@ public class LogDir {
 
     public boolean mkdir(File outDir) {
         StringBuilder dirPath = new StringBuilder();
-        dirPath.append(year)
-                .append(File.separator)
-                .append(month)
-                .append(File.separator)
-                .append(storeCode)
-                .append(File.separator)
-                .append(empCode)
-                .append(File.separator);
-        File dir = new File(outDir, dirPath.toString());
-        this.dir = dir;
-        if (!dir.exists()) {
-            return dir.mkdirs();
+        if (year != null && month != null && storeCode != null && empCode != null) {
+            dirPath.append(year)
+                    .append(File.separator)
+                    .append(month)
+                    .append(File.separator)
+                    .append(storeCode)
+                    .append(File.separator)
+                    .append(empCode)
+                    .append(File.separator);
+            File dir = new File(outDir, dirPath.toString());
+            this.dir = dir;
+            if (!dir.exists()) {
+                return dir.mkdirs();
+            }
         }
         return false;
     }
@@ -73,11 +75,12 @@ public class LogDir {
 
     @Override
     public String toString() {
-        return "LogFile{" +
+        return "LogDir{" +
                 "year='" + year + '\'' +
                 ", month='" + month + '\'' +
                 ", storeCode='" + storeCode + '\'' +
                 ", empCode='" + empCode + '\'' +
+                ", dir=" + dir +
                 '}';
     }
 }
