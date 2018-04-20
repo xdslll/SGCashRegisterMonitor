@@ -1,6 +1,5 @@
-package com.sg.cash.monitor;
+package com.sg.cash.local;
 
-import com.sg.cash.exception.FileLoadException;
 import com.sg.cash.model.LogDir;
 import com.sg.cash.util.FileUtil;
 import com.sg.cash.util.LogUtil;
@@ -36,6 +35,11 @@ public class LocalLogFileHandler {
     public LocalLogFileHandler(String logFileInPath, String logFileOutPath) {
         this.inDir = new File(logFileInPath);
         this.outDir = new File(logFileOutPath);
+    }
+
+    public LocalLogFileHandler(File inDir, File outDir) {
+        this.inDir = inDir;
+        this.outDir = outDir;
     }
 
     /**
@@ -75,13 +79,21 @@ public class LocalLogFileHandler {
                 if (oldModified > newModified) {
                     FileUtil.copyFileOnce(oldFile, newFile);
                     index++;
+                } else if (newFile.length() == 0) {
+                    // 如果新文件的容量为0，说明文件拷贝有误，重新操作一遍
+                    System.out.println("新文件[" + newFile.getAbsolutePath() + "]容量为0,删除后重新拷贝");
+                    if (newFile.delete()) {
+                        FileUtil.copyFileOnce(oldFile, newFile);
+                        index++;
+                    } else {
+                        System.out.println("新文件[" + newFile.getAbsolutePath() + "]删除失败，请检查");
+                    }
                 }
             } else {
                 FileUtil.copyFileOnce(oldFile, newFile);
                 index++;
             }
         }
-        LogUtil.info(logger, "index=" + index);
     }
 
 
@@ -127,8 +139,10 @@ public class LocalLogFileHandler {
         int originalFileCount = inDir.listFiles().length;
         AtomicInteger newFileCount = new AtomicInteger();
         FileUtil.checkFile(outDir, inDir, (originalFile, newFile) -> newFileCount.addAndGet(1));
-        LogUtil.info(logger, "original file count:" + originalFileCount + ",new file count:" + newFileCount.get());
-        LogUtil.info(logger, "count test:\t" + (originalFileCount == newFileCount.get() ? "pass" : "failed"));
+        //LogUtil.info(logger, "original file count:" + originalFileCount + ",new file count:" + newFileCount.get());
+        //LogUtil.info(logger, "count test:\t" + (originalFileCount == newFileCount.get() ? "pass" : "failed"));
+        System.out.print("[" + inDir.getAbsolutePath() + "] count:" + originalFileCount + ",[" + outDir.getAbsolutePath() + "] count:" + newFileCount.get());
+        System.out.print("\t" + (originalFileCount == newFileCount.get() ? "pass\n" : "failed\n"));
     }
 
     public void checkFileLine() throws IOException {
@@ -208,5 +222,50 @@ public class LocalLogFileHandler {
 
     public void setOutDir(File outDir) {
         this.outDir = outDir;
+    }
+
+    /**
+     * 完成文件复制和编码转换工作
+     *
+     * @param localPath - 输入文件夹
+     * @param localPath2 - 输出文件夹
+     * @param check - 是否校验文件行数
+     * @return
+     */
+    public static boolean convert(String localPath, String localPath2, boolean check) {
+        try {
+            // 生成输入文件夹总路径对象
+            File dir1 = new File(localPath);
+            // 获取输入文件夹下的所有子文件夹
+            File[] subDirList1 = dir1.listFiles();
+            // 如果文件夹不存在直接退出
+            if (subDirList1 == null || subDirList1.length == 0) {
+                return true;
+            }
+            for (int i = 0; i < subDirList1.length; i++) {
+                // 如果不是文件夹直接退出本次循环
+                if (subDirList1[i].isFile()) {
+                    continue;
+                }
+                // 获取输入子文件夹对象
+                File inDir = subDirList1[i];
+                // 获取输出子文件夹对象
+                File outDir = new File(FileUtil.appendDir(localPath2, inDir.getName()));
+                // 获取转码文件处理对象
+                LocalLogFileHandler localLogFileHandler = new LocalLogFileHandler(inDir, outDir);
+                // 将本地数据进行复制并转码(gbk->utf8)
+                localLogFileHandler.copyLogFileAndConvertToUTF8();
+                // 检查文件夹下的文件数量是否一致
+                localLogFileHandler.checkFileAmount();
+                if (check) {
+                    // 检查文件的行数是否一致
+                    localLogFileHandler.checkFileLine();
+                }
+            }
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return false;
     }
 }

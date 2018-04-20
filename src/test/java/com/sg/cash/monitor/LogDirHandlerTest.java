@@ -1,5 +1,6 @@
 package com.sg.cash.monitor;
 
+import com.sg.cash.local.LocalLogFileHandler;
 import com.sg.cash.util.LogUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,11 +30,11 @@ public class LogDirHandlerTest {
         LogUtil.info(logger, OsName);
         if (OsName.matches("^Mac.*")) {
             String inPath = "/Users/apple/Desktop/JKreport";
-            String outPath = "/Users/apple/Desktop/JKreport2";
+            String outPath = "/Users/apple/Desktop/JKreport_2";
             localLogFileHandler = new LocalLogFileHandler(inPath, outPath);
         } else {
             String inPath = "E:/Project/SgCashRegisterMonitor/JKreport";
-            String outPath = "E:/Project/SgCashRegisterMonitor/JKreport2";
+            String outPath = "E:/Project/SgCashRegisterMonitor/JKreport_2";
             localLogFileHandler = new LocalLogFileHandler(inPath, outPath);
         }
     }
@@ -59,8 +60,8 @@ public class LogDirHandlerTest {
 
     @Test
     public void test3CheckFile() throws IOException {
-        //localLogFileHandler.checkFileAmount();
-        //localLogFileHandler.checkFileLine();
+        localLogFileHandler.checkFileAmount();
+        localLogFileHandler.checkFileLine();
     }
 
     @After

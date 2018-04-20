@@ -1,4 +1,4 @@
-package com.sg.cash.monitor;
+package com.sg.cash.local;
 
 /**
  * @author xiads
@@ -6,7 +6,5 @@ package com.sg.cash.monitor;
  * @since
  */
 public interface LogFileAction {
-
-
 
 }

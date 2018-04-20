@@ -1,7 +1,7 @@
 package com.sg.cash.util;
 
 import com.sg.cash.exception.FileLoadException;
-import com.sg.cash.monitor.FileRunnable;
+import com.sg.cash.local.FileRunnable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -263,5 +263,52 @@ public class FileUtil {
         fis.close();
         fos.close();
         LogUtil.debug(logger, "file[" + oldFile.getName() + "] is copied successfully.");
+    }
+
+    /**
+     * 统计文件夹的文件数量
+     * @param dir
+     * @return
+     */
+    public static int count(File dir) {
+        int count = 0;
+        if (dir.exists()) {
+            if (dir.isDirectory()) {
+                File[] files = dir.listFiles();
+                if (files != null && files.length > 0) {
+                    for (File file : files) {
+                        count += count(file);
+                    }
+                }
+            } else if (dir.isFile() && !dir.getName().startsWith(".")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public static String append(String filePath) {
+        if (!filePath.endsWith(File.separator)) {
+            return new StringBuilder()
+                    .append(filePath)
+                    .append(File.separator)
+                    .toString();
+        }
+        return filePath;
+    }
+
+    public static String appendFile(String originalPath, String newPath) {
+        return new StringBuilder()
+                .append(append(originalPath))
+                .append(newPath)
+                .toString();
+    }
+
+    public static String appendDir(String originalPath, String newPath) {
+        return new StringBuilder()
+                .append(append(originalPath))
+                .append(newPath)
+                .append(File.separator)
+                .toString();
     }
 }
