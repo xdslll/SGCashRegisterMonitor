@@ -31,7 +31,7 @@ public class Client {
     /**
      * hdfs远程uri
      */
-    public static final String HDFS_REMOTE_URI = "hdfs://www.mac-bigdata-02.com:8020";
+    public static final String HDFS_REMOTE_URI = "hdfs://www.mac-bigdata-01.com:8020";
 
     /**
      * hdfs内部uri
@@ -111,12 +111,25 @@ public class Client {
 
     public static void main(String[] args) {
         long _START = System.currentTimeMillis();
+        //sync();
+        check();
+        long _END = System.currentTimeMillis();
+        System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
+    }
 
+    public static void check() {
+        FtpUtil.check(FTP_PATH);
+        LocalLogFileHandler.check(LOCAL_PATH);
+        LocalLogFileHandler.check(LOCAL_PATH2);
+    }
+
+    public static void sync() {
         // 同步ftp数据
         if (!FtpUtil.sync(FTP_PATH, LOCAL_PATH)) {
             System.out.println("ftp服务同步出错!");
             return;
         }
+        /*
         // 将本地数据进行转码(gbk->utf8)
         if (!LocalLogFileHandler.convert(LOCAL_PATH, LOCAL_PATH2, false)) {
             System.out.println("本地数据转码出错!");
@@ -141,13 +154,10 @@ public class Client {
         if (!SqoopUtil.exportDataToMySQLByCmd()) {
             System.out.println("hive导出mysql出错!");
             return;
-        }
+        }*/
         // 测试代码
         //HdfsUtil.compareDirectories(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE, HIVE_WAREHOUSE2);
         //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_1.log");
         //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_2.log");
-        // 将hive结果集导入mysql
-        long _END = System.currentTimeMillis();
-        System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
     }
 }

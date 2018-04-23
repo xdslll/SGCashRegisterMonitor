@@ -311,4 +311,12 @@ public class FileUtil {
                 .append(File.separator)
                 .toString();
     }
+
+    public static String getFileName(String ftpFileName) {
+        int index = ftpFileName.lastIndexOf("/");
+        if (index < 0) {
+            return null;
+        }
+        return ftpFileName.substring(index + 1, ftpFileName.length());
+    }
 }

@@ -268,4 +268,51 @@ public class LocalLogFileHandler {
         }
         return false;
     }
+
+    public static void check(String localPath) {
+        System.out.println("开始检查文件夹[" + localPath + "]...");
+        File dir = new File(localPath);
+        if (!dir.exists()) {
+            System.out.println("文件夹[" + localPath + "]不存在");
+            return;
+        }
+        if (!dir.isDirectory()) {
+            System.out.println("文件[" + localPath + "]不是文件夹");
+            return;
+        }
+        System.out.println("文件夹总数:" + count(dir, "dir"));
+        System.out.println("文件总数:" + count(dir, "file"));
+        System.out.println("容量为0文件总数:" + count(dir, "zero"));
+    }
+
+    /**
+     * 统计文件或文件夹数量
+     *
+     * @param file - 文件路径
+     * @param key - dir:统计文件夹数量,file:统计文件数量,zero:统计容量为0的文件数
+     * @return
+     */
+    public static int count(File file, String key) {
+        int count = 0;
+        File[] files = file.listFiles();
+        if (files == null || files.length == 0) {
+            return count;
+        }
+        for (File f : files) {
+            if (f.isDirectory()) {
+                if (key.equals("dir")) {
+                    count++;
+                }
+                count += count(f, key);
+            } else if (f.isFile()) {
+                if (key.equals("file") && !f.getName().startsWith(".")) {
+                    count++;
+                } else if (key.equals("zero") && !f.getName().startsWith(".") && f.length() == 0) {
+                    System.out.println("文件[" + f.getAbsolutePath() + "]容量为" + f.length());
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 }

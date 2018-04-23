@@ -1,10 +1,7 @@
 package com.sg.cash.hadoop.ftp;
 
 import com.sg.cash.util.FileUtil;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.ftp.*;
 
 import java.io.*;
 import java.net.SocketException;
@@ -31,10 +28,6 @@ public class FtpUtil {
         return ftpClient;
     }
 
-    public void setFtpClient(FTPClient ftpClient) {
-        this.ftpClient = ftpClient;
-    }
-
     /**
      * 连接ftp服务器
      */
@@ -43,8 +36,8 @@ public class FtpUtil {
         ftpClient.setControlEncoding("UTF-8");
         ftpClient.setDataTimeout(60 * 1000);
         ftpClient.setConnectTimeout(60 * 1000);
-        ftpClient.setControlKeepAliveReplyTimeout(60 * 1000);
-        ftpClient.setControlKeepAliveTimeout(60);
+        //ftpClient.setControlKeepAliveReplyTimeout(60 * 1000);
+        //ftpClient.setControlKeepAliveTimeout(60);
         ftpClient.setDefaultTimeout(60 * 1000);
         try {
             System.out.println("开始连接ftp站点");
@@ -53,7 +46,7 @@ public class FtpUtil {
             int replyCode = ftpClient.getReplyCode();
             if (!FTPReply.isPositiveCompletion(replyCode)) {
                 System.out.println("连接失败");
-                ftpClient.setSoTimeout(60 * 1000);
+                //ftpClient.setSoTimeout(60 * 1000);
             } else {
                 System.out.println("连接成功");
             }
@@ -103,7 +96,7 @@ public class FtpUtil {
                         .toString();
                 // 如果本地文件不存在，则直接下载，或者文件存在但需要更新，则删除文件后下载
                 if (!localFile.exists() || needCover) {
-                    deleteFile(localFile);
+                    deleteLocalFile(localFile);
                     flag = doDownload(ftpFileName, localFile);
                 } else {
                     // System.out.println("本地文件[" + localFile.getAbsolutePath() + "]存在，无需更新");
@@ -111,7 +104,7 @@ public class FtpUtil {
                     // 如果本地文件与ftp文件容量的差值大于1KB，说明文件没有同步完成，删除后重新下载
                     if (localFile.exists() && (localFile.length() == 0 ||
                             Math.abs(localFile.length() - ftpFile.getSize()) > 1024)) {
-                        deleteFile(localFile);
+                        deleteLocalFile(localFile);
                         flag = doDownload(ftpFileName, localFile);
                     }
                 }
@@ -122,11 +115,11 @@ public class FtpUtil {
         return flag;
     }
 
-    private void deleteFile(File localFile) {
+    private void deleteLocalFile(File localFile) {
         if (localFile.exists() && localFile.delete()) {
             System.out.println("本地文件[" + localFile.getAbsolutePath() + "]删除成功");
         } else {
-            System.out.println("本地文件[" + localFile.getAbsolutePath() + "]不存在");
+            System.out.println("本地文件[" + localFile.getAbsolutePath() + "]删除失败或文件不存在");
         }
     }
 
@@ -326,17 +319,24 @@ public class FtpUtil {
             // 获取FTPClient
             FTPClient ftpClient = ftpUtil.getFtpClient();
             // 获取指定目录下的所有文件
-            FTPFile[] ftpFiles = ftpClient.listFiles(ftpPath);
+            ftpClient.enterLocalPassiveMode();
+            String[] ftpFileNames = ftpClient.listNames(ftpPath);
             // 如果文件不存在，直接退出
-            if (ftpFiles == null || ftpFiles.length == 0) {
+            if (ftpFileNames == null || ftpFileNames.length == 0) {
                 return false;
             }
             // ftp累计删除文件总数
             long ftpDeleteFileNumber = 0;
-            // 完成所有新日志文件的分组工作
-            for (FTPFile ftpFile : ftpFiles) {
-                // 如果是文件夹则直接跳过
-                if (ftpFile.isDirectory()) {
+            for (String ftpFilePath : ftpFileNames) {
+                // 如果不是以.log结尾，说明是文件夹，不处理
+                if (!ftpFilePath.toLowerCase().endsWith(".log")) {
+                    continue;
+                }
+                // 获取文件的FTPFile对象
+                ftpClient.enterLocalPassiveMode();
+                FTPFile ftpFile = ftpClient.listFiles(ftpFilePath)[0];
+                // 如果不是文件，则不处理
+                if (ftpFile == null || !ftpFile.isFile()) {
                     continue;
                 }
                 // 获取文件名
@@ -353,45 +353,61 @@ public class FtpUtil {
                             .append(File.separator)
                             .toString();
                     // 原有文件的绝对路径
-                    String oldFilePath = new StringBuilder()
+                    String originalFilePath = new StringBuilder()
                             .append(ftpPath)
                             .append(ftpFileName)
                             .toString();
                     // 移动后文件的绝对路径
-                    String newFilePath = new StringBuilder()
+                    String dateFilePath = new StringBuilder()
                             .append(datePath)
                             .append(ftpFileName)
                             .toString();
                     // 判断日期文件夹是否存在
                     if (ftpClient.changeWorkingDirectory(datePath)) {
-                        // System.out.println("文件夹[" + datePath + "]存在!");
+                        System.out.println("文件夹[" + datePath + "]存在!");
                         if (ftpFile.isFile() && ftpFile.isValid() && !ftpFile.isUnknown()) {
-                            // 判断指定目录下是否存在新文件
-                            boolean needMove = false;
+                            // 定义是否需要移动文件
+                            boolean needMove = true;
+                            // 定义日期文件夹中是否包含了同样的文件
+                            boolean containFile = false;
                             // 比对日期目录下是否已经包含了根目录下的文件，防止文件重复
+                            ftpClient.enterLocalPassiveMode();
                             FTPFile[] targetFileList = ftpClient.listFiles(datePath);
-                            for (FTPFile file : targetFileList) {
-                                if (file.getName().equals(ftpFileName)) {
-                                    // 如果文件名一致，判断容量是否一致，如果不一致，则需要更新
-                                    if (file.getSize() != ftpFile.getSize()) {
-                                        needMove = true;
-                                    } else {
-                                        //如果容量一致，则直接删除老文件，保留新文件
-                                        ftpUtil.delete(oldFilePath);
+                            for (FTPFile targetFile : targetFileList) {
+                                if (targetFile.getName().toLowerCase().equals(ftpFileName.toLowerCase())) {
+                                    if (ftpFile.getSize() == 0) {
+                                        // 如果原文件容量为0，直接删除新文件，并且不做移动操作
+                                        ftpUtil.delete(originalFilePath);
                                         ftpDeleteFileNumber++;
+                                        needMove = false;
+                                    } else if (ftpFile.getSize() > 0 && targetFile.getSize() == ftpFile.getSize()) {
+                                        // 如果容量一致，直接删除新文件，并且不做移动操作
+                                        ftpUtil.delete(originalFilePath);
+                                        ftpDeleteFileNumber++;
+                                        needMove = false;
+                                    } else {
+                                        needMove = true;
                                     }
+                                    // 如果文件名一致，说明包含了同样的文件
+                                    containFile = true;
                                     break;
                                 }
                             }
+                            // 移动文件
                             if (needMove) {
-                                ftpUtil.delete(newFilePath);
-                                ftpDeleteFileNumber++;
-                                System.out.println("开始移动[" + oldFilePath + "]->[" + newFilePath + "]");
+                                // 如果日期文件夹下存在同名文件，则先删除
+                                if (containFile) {
+                                    ftpUtil.delete(dateFilePath);
+                                    ftpDeleteFileNumber++;
+                                }
+                                System.out.println("开始移动[" + originalFilePath + "]->[" + dateFilePath + "]");
                                 // 将文件移动到指定目录下
-                                ftpUtil.move(oldFilePath, newFilePath);
+                                ftpUtil.move(originalFilePath, dateFilePath);
+                            } else {
+                                System.out.println("[" + originalFilePath + "]->[" + dateFilePath + "]一致，无需复制");
                             }
                         } else if (ftpFile.isDirectory()) {
-                            // System.out.println("文件[" + ftpFileName + "]是文件夹!");
+                            System.out.println("文件[" + ftpFileName + "]是文件夹!");
                         } else {
                             System.out.println("文件[" + ftpFileName + "]状态异常!");
                         }
@@ -401,7 +417,7 @@ public class FtpUtil {
                         if (ftpClient.makeDirectory(datePath)) {
                             System.out.println("文件夹[" + datePath + "]创建成功!");
                             // 将文件移动到指定目录下
-                            ftpUtil.move(oldFilePath, newFilePath);
+                            ftpUtil.move(originalFilePath, dateFilePath);
                         } else {
                             System.out.println("文件夹[" + datePath + "]创建失败!");
                         }
@@ -464,4 +480,63 @@ public class FtpUtil {
      */
     public static final Pattern PATTERN = Pattern.compile("[0-9]{8}");
 
+    public static void check(String ftpPath) {
+        FtpUtil ftpUtil = new FtpUtil();
+        try {
+            ftpUtil.connect();
+            FTPClient ftpClient = ftpUtil.getFtpClient();
+            // 统计文件夹总数
+            int dirNumber = 0;
+            FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
+            System.out.println("文件夹总数:" + (dirNumber = dirs.length));
+            // 统计文件总数
+            System.out.println("文件总数:" + count(ftpPath, ftpClient));
+            // 统计是否存在容量为0的文件
+            System.out.println("容量为0文件总数:" + zero(ftpPath, ftpClient));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            ftpUtil.destroyFtpClient();
+        }
+    }
+
+    private static int zero(String ftpPath, FTPClient ftpClient) throws IOException {
+        ftpClient.enterLocalPassiveMode();
+        int count = 0;
+        String[] ftpFileNames = ftpClient.listNames(ftpPath);
+        if (ftpFileNames == null || ftpFileNames.length == 0) {
+            return count;
+        }
+        for (String ftpFilePath : ftpFileNames) {
+            // System.out.println("正在比对文件[" + ftpFilePath + "]");
+            if (ftpFilePath.toLowerCase().endsWith(".log")) {
+                ftpClient.enterLocalPassiveMode();
+                FTPFile ftpFile = ftpClient.listFiles(ftpFilePath)[0];
+                if (ftpFile.getSize() == 0) {
+                    count++;
+                }
+            } else {
+                count += zero(ftpFilePath, ftpClient);
+            }
+        }
+        return count;
+    }
+
+    public static int count(String ftpPath, FTPClient ftpClient) throws IOException {
+        int count = 0;
+        ftpClient.enterLocalPassiveMode();
+        String[] ftpFileNames = ftpClient.listNames(ftpPath);
+        if (ftpFileNames == null || ftpFileNames.length == 0) {
+            return count;
+        }
+        for (String ftpFilePath : ftpFileNames) {
+            //System.out.println("正在比对文件[" + ftpFilePath + "]");
+            if (ftpFilePath.toLowerCase().endsWith(".log")) {
+                count++;
+            } else {
+                count += count(ftpFilePath, ftpClient);
+            }
+        }
+        return count;
+    }
 }

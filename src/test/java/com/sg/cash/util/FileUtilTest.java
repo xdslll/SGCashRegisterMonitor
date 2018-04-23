@@ -35,7 +35,7 @@ public class FileUtilTest {
         Assert.assertTrue(oldFileLength == newFileLength);
     }
 
-    @Test
+    //@Test
     public void copyOrMoveFileTest() throws IOException {
         //copyOrMoveFile();
     }
@@ -48,7 +48,7 @@ public class FileUtilTest {
         FileUtil.copyDir(originalDir, targetDir);
     }
 
-    @Test
+    //@Test
     public void copyDirTest() {
         //copyDir();
     }
@@ -92,8 +92,14 @@ public class FileUtilTest {
         Assert.assertTrue(FileUtil.checkDirEqual(originalDir, targetDir));
     }
 
-    @Test
+    //@Test
     public void checkDirEqualTest() throws IOException {
         checkDirEqual();
+    }
+
+    @Test
+    public void tesGetFileName() {
+       String fileName = FileUtil.getFileName("/Users/apple/Desktop/JKreport/4033_0014_20180404.log");
+       Assert.assertEquals("4033_0014_20180404.log", fileName);
     }
 }
