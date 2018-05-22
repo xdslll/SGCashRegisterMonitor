@@ -50,6 +50,38 @@ public class HdfsUtil {
     }
 
     /**
+     * 上传收银机文件到hdfs
+     *
+     * @param hdfsRemoteUri
+     * @param hdfsUser
+     * @param hdfsUploadMachineDir
+     * @param localCashMachineFilePath
+     * @return
+     */
+    public static boolean uploadMachineFileToHdfs(String hdfsRemoteUri, String hdfsUser,
+                                                  String hdfsUploadMachineDir, String localCashMachineFilePath) {
+        FileSystem hdfs = null;
+        try {
+            // 生成配置文件
+            Configuration conf = new Configuration();
+            // 生成hdfs对象
+            hdfs = FileSystem.get(
+                    new URI(hdfsRemoteUri),
+                    conf,
+                    hdfsUser
+            );
+            // 对本地的门店信息文件进行数据处理
+            uploadFile(hdfs, localCashMachineFilePath, hdfsUploadMachineDir);
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(hdfs);
+        }
+        return false;
+    }
+
+    /**
      * 上传门店数据到hdfs
      *
      * @param hdfsUri
@@ -587,5 +619,52 @@ public class HdfsUtil {
             close(hdfs);
         }
         return false;
+    }
+
+    public static void check(String hdfsRemoteUri, String hdfsUser, String hdfsDir) {
+        FileSystem hdfs = null;
+        try {
+            // 生成配置文件
+            Configuration conf = new Configuration();
+            // 生成hdfs对象
+            hdfs = FileSystem.get(
+                    new URI(hdfsRemoteUri),
+                    conf,
+                    hdfsUser
+            );
+            Path p = new Path(hdfsDir);
+            if (!hdfs.exists(p)) {
+                return;
+            }
+            System.out.println("文件夹[" + p.toString() + "]下文件夹数量:" + count(hdfs, p, "dir"));
+            System.out.println("文件夹[" + p.toString() + "]下文件数量:" + count(hdfs, p, "file"));
+            System.out.println("文件夹[" + p.toString() + "]下容量为0文件数量:" + count(hdfs, p, "zero"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(hdfs);
+        }
+    }
+
+    private static int count(FileSystem hdfs, Path p, String key) throws IOException {
+        int count = 0;
+        FileStatus[] files = hdfs.listStatus(p);
+        for (FileStatus file : files) {
+            if (file.isDirectory()) {
+                if (key.equals("dir")) {
+                    count++;
+                }
+                count += count(hdfs, file.getPath(), key);
+            } else if (file.isFile()) {
+                if (key.equals("file")) {
+                    count++;
+                } else if (key.equals("zero")) {
+                    if (file.getLen() == 0) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 }

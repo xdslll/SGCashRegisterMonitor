@@ -23,9 +23,9 @@ import java.util.Vector;
  */
 public class SqoopUtil {
 
-    public static boolean exportDataToMySQLByCmd() {
+    public static boolean exportDataToMySQLByCmd(String sqoopFile) {
         int returnCode = 0;
-        String cmd = "/opt/modules/sqoop-1.4.5-cdh5.3.6/bin/sqoop --options-file /opt/sg/sqoop_export.file";
+        String cmd = "/opt/modules/sqoop-1.4.5-cdh5.3.6/bin/sqoop --options-file " + sqoopFile;
         JSch jsch = new JSch();
         MyUserInfo userInfo = new MyUserInfo();
         Vector<String> stdout = new Vector<>();
@@ -63,7 +63,7 @@ public class SqoopUtil {
                 returnCode = channel.getExitStatus();
             }
 
-            System.out.println("运行结果:" + (returnCode == 0 ? "成功" : "失败"));
+            System.out.println("运行结果:" + (returnCode == 0 ? "成功" : "失败") + "(" + returnCode + ")");
 
             return true;
         } catch(Exception ex) {
@@ -85,6 +85,42 @@ public class SqoopUtil {
             }
         }
         return false;
+    }
+
+    public static boolean clearTable(String sqoopTableName) {
+        Connection conn = null;
+        Statement stmt = null;
+        String mysqlUrl = Client.MYSQL_URL;
+        String mysqlUser = Client.MYSQL_USER;
+        String mysqlPassword = Client.MYSQL_PASSWORD;
+        try {
+            // 清空现有MySQL数据
+            Class.forName(Client.MYSQL_DRIVER_NAME);
+            conn = DriverManager.getConnection(mysqlUrl, mysqlUser, mysqlPassword);
+            System.out.println("连接mysql数据库成功");
+            stmt = conn.createStatement();
+            System.out.println("清空mysql表[" + sqoopTableName + "]");
+            stmt.execute("truncate table " + sqoopTableName);
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public static class MyUserInfo implements UserInfo {

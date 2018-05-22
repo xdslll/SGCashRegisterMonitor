@@ -308,7 +308,7 @@ public class LocalLogFileHandler {
                 if (key.equals("file") && !f.getName().startsWith(".")) {
                     count++;
                 } else if (key.equals("zero") && !f.getName().startsWith(".") && f.length() == 0) {
-                    System.out.println("文件[" + f.getAbsolutePath() + "]容量为" + f.length());
+                    //System.out.println("文件[" + f.getAbsolutePath() + "]容量为" + f.length());
                     count++;
                 }
             }

@@ -3,6 +3,7 @@ package com.sg.cash.hadoop;
 import com.sg.cash.hadoop.ftp.FtpUtil;
 import com.sg.cash.hadoop.hdfs.HdfsUtil;
 import com.sg.cash.hadoop.hive.HiveUtil;
+import com.sg.cash.hadoop.sqlserver.SQLServerHandler;
 import com.sg.cash.hadoop.sqoop.SqoopUtil;
 import com.sg.cash.local.LocalLogFileHandler;
 
@@ -56,7 +57,7 @@ public class Client {
     /**
      * hive连接字符串
      */
-    public static final String HIVE_URL = "jdbc:hive2://www.mac-bigdata-01.com:10000/sg";
+    public static final String HIVE_URL = "jdbc:hive2://www.mac-bigdata-01.com:10000/sg2";
 
     /**
      * hive连接用户
@@ -84,6 +85,11 @@ public class Client {
     public static final String HIVE_TABLE_STORE = "tbl_sg_store_info";
 
     /**
+     * hive收银机表名
+     */
+    public static final String HIVE_TABLE_MACHINE = "tbl_sg_machine_info";
+
+    /**
      * hive仓库地址
      */
     public static final String HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/";
@@ -98,6 +104,12 @@ public class Client {
     public static final String LOCAL_FINAL_STORE_FILE_PATH = "/Users/apple/Desktop/store3.csv";
 
     /**
+     * 收银机相关的文件
+     */
+    public static final String HDFS_UPLOAD_MACHINE_DIR = "/sg/report/machine/";
+    public static final String LOCAL_CASH_MACHINE_FILE_PATH = "/Users/apple/Desktop/machine.csv";
+
+    /**
      * MySQL相关参数
      */
     public static final String MYSQL_URL = "jdbc:mysql://www.mac-bigdata-01.com:3306/sg?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull";
@@ -107,57 +119,84 @@ public class Client {
 
     public static final String SQOOP_MYSQL_URL = "jdbc:mysql://www.mac-bigdata-01.com:3306/sg";
     public static final String SQOOP_TABLE_NAME = "result_avg_cash_time";
+    public static final String SQOOP_TABLE_NAME2 = "result_avg_machine_effective";
     public static final String SQOOP_HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/result_avg_cash_time";
 
     public static void main(String[] args) {
         long _START = System.currentTimeMillis();
-        //sync();
-        check();
+        sync();
+        //check();
         long _END = System.currentTimeMillis();
         System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
     }
 
     public static void check() {
-        FtpUtil.check(FTP_PATH);
-        LocalLogFileHandler.check(LOCAL_PATH);
-        LocalLogFileHandler.check(LOCAL_PATH2);
+        //FtpUtil.check(FTP_PATH);
+        //LocalLogFileHandler.check(LOCAL_PATH);
+        //LocalLogFileHandler.check(LOCAL_PATH2);
+        HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HDFS_REPORT_INPUT_DIR);
+        HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE);
+        // 测试代码
+        //HdfsUtil.compareDirectories(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE, HIVE_WAREHOUSE2);
+        //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_1.log");
+        //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_2.log");
     }
 
     public static void sync() {
-        // 同步ftp数据
+        /*// 同步ftp数据
         if (!FtpUtil.sync(FTP_PATH, LOCAL_PATH)) {
             System.out.println("ftp服务同步出错!");
             return;
-        }
-        /*
+        }*/
+
         // 将本地数据进行转码(gbk->utf8)
-        if (!LocalLogFileHandler.convert(LOCAL_PATH, LOCAL_PATH2, false)) {
+        /*if (!LocalLogFileHandler.convert(LOCAL_PATH, LOCAL_PATH2, false)) {
             System.out.println("本地数据转码出错!");
             return;
         }
+
         // 将本地文件上传至hdfs
         if (!HdfsUtil.uploadFileToHdfs(HDFS_REMOTE_URI, HDFS_USER, HDFS_REPORT_DIR, LOCAL_PATH2, HIVE_WAREHOUSE)) {
             System.out.println("上传日志文件到hdfs出错!");
             return;
         }
+
         if (!HdfsUtil.uploadStoreFileToHdfs(HDFS_REMOTE_URI, HDFS_USER, HDFS_UPLOAD_STORE_DIR,
                 LOCAL_ORIGINAL_STORE_FILE_PATH, LOCAL_NEW_STORE_FILE_PATH, LOCAL_FINAL_STORE_FILE_PATH)) {
             System.out.println("上传门店文件到hdfs出错!");
             return;
         }
+
+        if (!HdfsUtil.uploadMachineFileToHdfs(HDFS_REMOTE_URI, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR,
+                LOCAL_CASH_MACHINE_FILE_PATH)) {
+            System.out.println("上传门店文件到hdfs出错!");
+            return;
+        }*/
+
         // 将hdfs数据导入hive
         if (!HiveUtil.uploadToHiveWarehouse()) {
             System.out.println("上传hive仓库出错!");
             return;
         }
         // 将hive数据导入mysql
-        if (!SqoopUtil.exportDataToMySQLByCmd()) {
-            System.out.println("hive导出mysql出错!");
+        if (!SqoopUtil.clearTable(Client.SQOOP_TABLE_NAME)) {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME + "]失败!");
             return;
-        }*/
-        // 测试代码
-        //HdfsUtil.compareDirectories(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE, HIVE_WAREHOUSE2);
-        //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_1.log");
-        //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_2.log");
+        }
+        if (!SqoopUtil.exportDataToMySQLByCmd("/opt/sg/sqoop_export_avg_time.file")) {
+            System.out.println("hive导出sqoop_export_avg_time.file出错!");
+            return;
+        }
+        if (!SqoopUtil.clearTable(Client.SQOOP_TABLE_NAME2)) {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME + "]失败!");
+            return;
+        }
+        if (!SqoopUtil.exportDataToMySQLByCmd("/opt/sg/sqoop_export_avg_effective.file")) {
+            System.out.println("hive导出sqoop_export_avg_effective.file出错!");
+            return;
+        }
+
+        // 自动导入互普的数据
+        SQLServerHandler.syncHupuData();
     }
 }

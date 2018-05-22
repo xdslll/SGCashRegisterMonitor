@@ -125,12 +125,16 @@ public class HiveUtil {
         String tblLog = Client.HIVE_TABLE_LOG;
         // hive门店表
         String tblStore = Client.HIVE_TABLE_STORE;
+        // hive收银机表
+        String tblMachine = Client.HIVE_TABLE_MACHINE;
         // hdfs对象
         FileSystem hdfs = null;
         // hdfs日志根目录
         String hdfsRootLogPath = Client.HDFS_REPORT_INPUT_DIR;
         // hdfs门店根目录
         String hdfsRootStorePath = Client.HDFS_UPLOAD_STORE_DIR;
+        // hdfs收银机根目录
+        String hdfsRootMachinePath = Client.HDFS_UPLOAD_MACHINE_DIR;
         // hdfs远程uri
         String hdfsRemoteUri = Client.HDFS_REMOTE_URI;
         // hdfs内部uri
@@ -169,11 +173,13 @@ public class HiveUtil {
                         "  print_line int," +
                         "  print_begin_time string," +
                         "  print_end_time string," +
-                        "  ip string" +
+                        "  ip string," +
+                        "  money int" +
                         ") row format delimited fields terminated by \"|\"";
                 hiveClient.createTable(stmt, createLogTableSql);
                 System.out.println("是否包含[" + tblLog + "]表:" + hiveClient.existTable(stmt, tblLog));
             }
+
             // 判断门店表是否存在，如果不存在则进行创建
             System.out.println("是否包含[" + tblStore + "]表:" + hiveClient.existTable(stmt, tblStore));
             if (!hiveClient.existTable(stmt, tblStore)) {
@@ -189,6 +195,19 @@ public class HiveUtil {
                 hiveClient.createTable(stmt, createStoreTableSql);
                 System.out.println("是否包含[" + tblStore + "]表:" + hiveClient.existTable(stmt, tblStore));
             }
+
+            // 判断收银机表是否存在，如果不存在则进行创建
+            System.out.println("是否包含[" + tblMachine + "]表:" + hiveClient.existTable(stmt, tblMachine));
+            if (!hiveClient.existTable(stmt, tblMachine)) {
+                System.out.println("创建表[" + tblMachine + "]");
+                String createMachineTableSql = "CREATE TABLE " + db + ".tbl_sg_machine_info (" +
+                        "  store_no string," +
+                        "  machine_num int" +
+                        ") row format delimited fields terminated by \",\"";
+                hiveClient.createTable(stmt, createMachineTableSql);
+                System.out.println("是否包含[" + tblMachine + "]表:" + hiveClient.existTable(stmt, tblMachine));
+            }
+
             System.out.println(hiveClient.showTables(stmt));
 
             // 生成配置文件
@@ -237,23 +256,65 @@ public class HiveUtil {
                         .append(hdfsRootStorePath)
                         .toString();
                 // 导入数据
-                hiveClient.importData(stmt, hiveStorePath, db + "." + tblStore, false);
+                hiveClient.importData(stmt, hiveStorePath, db + "." + tblStore, true);
             } else {
                 System.out.println("文件夹[" + hdfsStorePath + "]下文件为空,无需导入");
             }
+            // 生成收银机文件根路径
+            Path hdfsMachinePath = new Path(hdfsRootMachinePath);
+            FileStatus[] machineFileList = hdfs.listStatus(hdfsMachinePath);
+            if (machineFileList != null && machineFileList.length > 0) {
+                // 生成hive识别的hdfs路径
+                String hiveMachinePath = new StringBuilder()
+                        .append(hdfsInternalUri)
+                        .append(hdfsRootMachinePath)
+                        .toString();
+                // 导入数据
+                hiveClient.importData(stmt, hiveMachinePath, db + "." + tblMachine, true);
+            } else {
+                System.out.println("文件夹[" + hdfsMachinePath + "]下文件为空,无需导入");
+            }
             if (needUpdate) {
-                // 开始生成查询结果
+                // 开始生成收银员报表
                 String dropResultAvgTimeSql = "drop table " + db + ".result_avg_cash_time";
-                String createResultAvgTimeSql = "" +
-                        "create table " + db + ".result_avg_cash_time as select round((t1.total_time / t1.total_sku), 2) as avg_cash_time, round(t1.total_time, 2) as total_time, t1.total_sku, t1.total_page, t1.total_order, t1.emp_no, t1.emp_name, t1.store_no, unix_timestamp(create_dt, 'yyyyMMdd') as create_dt, t2.store_name, t2.type, t2.area, t2.city, t2.small_area, round((t1.total_order/(t1.total_time/3600)), 2) as avg_order_time " +
-                        "from (select sum(print_end_time - print_begin_time) as total_time, sum(print_line) as total_sku, sum(print_page) as total_page, count(*) as total_order, emp_no, emp_name, store_no, create_dt from (select substring(create_dt,1,8) as create_dt, store_no, emp_no, emp_name, print_line, print_page, unix_timestamp(substring(print_begin_time,0,14),'yyyyMMddHHmmss') as print_begin_time, unix_timestamp(substring(print_end_time,0,14),'yyyyMMddHHmmss') as print_end_time from tbl_sg_report_cash_detail where !isnull(print_end_time) and !isnull(print_begin_time) and !isnull(create_dt)) as t1 " +
-                        "where (print_end_time - print_begin_time) <= 7200 group by emp_no, emp_name, store_no, create_dt) as t1 left join tbl_sg_store_info t2 on t1.store_no=t2.store_no";
+                String createResultAvgTimeSql = "create table " + db + ".result_avg_cash_time as " +
+                        "select round((t1.total_time / t1.total_sku), 2) as avg_cash_time, round(t1.total_time, 2) as total_time, t1.total_sku, t1.total_page, t1.total_order, t1.emp_no, t1.emp_name, t1.store_no, unix_timestamp(create_dt, 'yyyyMMdd') as create_dt, t2.store_name, t2.type, t2.area, t2.city, t2.small_area, round((t1.total_order/(t1.total_time/3600)), 2) as avg_order_time, t1.money " +
+                        "from (select sum(print_end_time - print_begin_time) as total_time, sum(print_line) as total_sku, sum(print_page) as total_page, count(*) as total_order, emp_no, emp_name, store_no, create_dt, sum(money) as money " +
+                        "from (select substring(create_dt,1,8) as create_dt, store_no, emp_no, emp_name, print_line, print_page, unix_timestamp(substring(print_begin_time,0,14),'yyyyMMddHHmmss') as print_begin_time, unix_timestamp(substring(print_end_time,0,14),'yyyyMMddHHmmss') as print_end_time, money from tbl_sg_report_cash_detail where !isnull(print_end_time) and !isnull(print_begin_time) and !isnull(create_dt)) as t1 where (print_end_time - print_begin_time) <= 7200 group by emp_no, emp_name, store_no, create_dt) as t1 " +
+                        "left join tbl_sg_store_info t2 on t1.store_no=t2.store_no";
+                        //"create table " + db + ".result_avg_cash_time as select round((t1.total_time / t1.total_sku), 2) as avg_cash_time, round(t1.total_time, 2) as total_time, t1.total_sku, t1.total_page, t1.total_order, t1.emp_no, t1.emp_name, t1.store_no, unix_timestamp(create_dt, 'yyyyMMdd') as create_dt, t2.store_name, t2.type, t2.area, t2.city, t2.small_area, round((t1.total_order/(t1.total_time/3600)), 2) as avg_order_time, t1.money " +
+                        //"from (select sum(print_end_time - print_begin_time) as total_time, sum(print_line) as total_sku, sum(print_page) as total_page, count(*) as total_order, emp_no, emp_name, store_no, create_dt, sum(money) as money from (select substring(create_dt,1,8) as create_dt, store_no, emp_no, emp_name, print_line, print_page, unix_timestamp(substring(print_begin_time,0,14),'yyyyMMddHHmmss') as print_begin_time, unix_timestamp(substring(print_end_time,0,14),'yyyyMMddHHmmss') as print_end_time, money from tbl_sg_report_cash_detail where !isnull(print_end_time) and !isnull(print_begin_time) and !isnull(create_dt)) as t1 " +
+                        //"where (print_end_time - print_begin_time) <= 7200 group by emp_no, emp_name, store_no, create_dt) as t1 left join tbl_sg_store_info t2 on t1.store_no=t2.store_no";
                 System.out.println("丢弃表[result_avg_cash_time]...");
                 stmt.execute(dropResultAvgTimeSql);
                 System.out.println("丢弃表[result_avg_cash_time]成功");
                 System.out.println("生成表[result_avg_cash_time]...");
+                //System.out.println(createResultAvgTimeSql);
                 stmt.execute(createResultAvgTimeSql);
                 System.out.println("生成表[result_avg_cash_time]成功");
+                // 开始生成收银机报表
+                String dropResultAvgMachineEffectSql = "drop table " + db + ".result_avg_machine_effective";
+                String createResultAvgMachineEffectSql = "create table result_avg_machine_effective as select " +
+                        "round(t1.total_time, 2) as total_time, t1.total_sku, t1.total_page, t1.total_order, t1.machine_no, " +
+                        "t1.store_no, unix_timestamp(create_dt, 'yyyyMMdd') as create_dt, t2.store_name, t2.type, t2.area, t2.city, " +
+                        "t2.small_area, round((t1.total_sku/(t1.total_time/3600)), 2) as avg_machine_effective, t3.machine_num, t1.ip, t1.launch_time, t1.program_time " +
+                        "from (select sum(print_end_time - print_begin_time) as total_time, sum(print_line) as total_sku, " +
+                        "sum(print_page) as total_page, count(*) as total_order, machine_no, store_no, create_dt, ip, " +
+                        "sum(launch_time) as launch_time, sum(program_time) as program_time " +
+                        "from (select substring(create_dt,1,8) as create_dt, store_no, machine_no, print_line, print_page, " +
+                        "unix_timestamp(substring(print_begin_time,0,14),'yyyyMMddHHmmss') as print_begin_time, " +
+                        "unix_timestamp(substring(print_end_time,0,14),'yyyyMMddHHmmss') as print_end_time, ip," +
+                        "round(0) as launch_time, round(0) as program_time from " +
+                        "tbl_sg_report_cash_detail where !isnull(print_end_time) and !isnull(print_begin_time) and !isnull(create_dt)) " +
+                        "as t1 where (print_end_time - print_begin_time) <= 7200 group by machine_no, store_no, create_dt, ip) as t1 " +
+                        "left join tbl_sg_store_info t2 on t1.store_no=t2.store_no " +
+                        "left join tbl_sg_machine_info t3 on t1.store_no=t3.store_no";
+                System.out.println("丢弃表[result_avg_machine_effective]...");
+                stmt.execute(dropResultAvgMachineEffectSql);
+                System.out.println("丢弃表[result_avg_machine_effective]成功");
+                System.out.println("生成表[result_avg_machine_effective]...");
+                stmt.execute(createResultAvgMachineEffectSql);
+                System.out.println("生成表[result_avg_machine_effective]成功");
             }
             return true;
         } catch (Exception ex) {
