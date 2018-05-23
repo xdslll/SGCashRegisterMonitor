@@ -97,7 +97,7 @@ public class FileUtilTest {
         checkDirEqual();
     }
 
-    @Test
+    //@Test
     public void tesGetFileName() {
        String fileName = FileUtil.getFileName("/Users/apple/Desktop/JKreport/4033_0014_20180404.log");
        Assert.assertEquals("4033_0014_20180404.log", fileName);

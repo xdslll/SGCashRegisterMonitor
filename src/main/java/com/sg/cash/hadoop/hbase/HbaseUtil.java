@@ -4,8 +4,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.IOException;
 
@@ -60,9 +58,9 @@ public class HbaseUtil {
         //重新获取表信息
         tableDesc = admin.getTableDescriptor((FULL_TABLE_NAME).getBytes());
         //验证表名
-        Assert.assertEquals(new String(tableDesc.getName()), FULL_TABLE_NAME);
+        // Assert.assertEquals(new String(tableDesc.getName()), FULL_TABLE_NAME);
         //验证列簇
-        Assert.assertEquals(new String(tableDesc.getColumnFamilies()[0].getName()), COLUMN_FAMILY_NAME);
+        // Assert.assertEquals(new String(tableDesc.getColumnFamilies()[0].getName()), COLUMN_FAMILY_NAME);
     }
 
     /**
@@ -112,7 +110,7 @@ public class HbaseUtil {
         Get get = new Get(toBytes(ROW_KEY));
         Result result = table.get(get);
         Cell[] rawCells = result.rawCells();
-        Assert.assertTrue(rawCells.length == 0);
+        // Assert.assertTrue(rawCells.length == 0);
     }
 
     /**
@@ -127,17 +125,17 @@ public class HbaseUtil {
         HBaseAdmin admin = new HBaseAdmin(conf);
         //获取表是否存在
         HTableDescriptor tableDesc = admin.getTableDescriptor((FULL_TABLE_NAME).getBytes());
-        Assert.assertNotNull(tableDesc);
+        // Assert.assertNotNull(tableDesc);
 
         //禁用表
         admin.disableTable(FULL_TABLE_NAME);
         //验证表是否被禁用
-        Assert.assertTrue(admin.isTableDisabled(FULL_TABLE_NAME));
+        // Assert.assertTrue(admin.isTableDisabled(FULL_TABLE_NAME));
 
         //删除表
         admin.deleteTable(FULL_TABLE_NAME);
         //验证表是否被删除
-        Assert.assertTrue(!admin.isTableAvailable(FULL_TABLE_NAME));
+        // Assert.assertTrue(!admin.isTableAvailable(FULL_TABLE_NAME));
 
         //删除命名空间
         admin.deleteNamespace(NS_NAME);
@@ -147,7 +145,7 @@ public class HbaseUtil {
             nsDesc = admin.getNamespaceDescriptor(NS_NAME);
         } catch(Exception ex) {}
         //验证命名空间是否被删除
-        Assert.assertTrue(nsDesc == null);
+        // Assert.assertTrue(nsDesc == null);
     }
 
     private void assertCells(Cell[] rawCells) {
@@ -157,13 +155,13 @@ public class HbaseUtil {
             String getColName = toString(CellUtil.cloneQualifier(cell));
             String getValue = toString(CellUtil.cloneValue(cell));
             if (i == 0) {
-                Assert.assertEquals(getColFamName, COLUMN_FAMILY_NAME);
-                Assert.assertEquals(getColName, COLUMN_2);
-                Assert.assertEquals(getValue, VALUE_2);
+                // Assert.assertEquals(getColFamName, COLUMN_FAMILY_NAME);
+                // Assert.assertEquals(getColName, COLUMN_2);
+                // Assert.assertEquals(getValue, VALUE_2);
             } else {
-                Assert.assertEquals(getColFamName, COLUMN_FAMILY_NAME);
-                Assert.assertEquals(getColName, COLUMN_1);
-                Assert.assertEquals(getValue, VALUE_1);
+                // Assert.assertEquals(getColFamName, COLUMN_FAMILY_NAME);
+                // Assert.assertEquals(getColName, COLUMN_1);
+                // Assert.assertEquals(getValue, VALUE_1);
             }
         }
     }

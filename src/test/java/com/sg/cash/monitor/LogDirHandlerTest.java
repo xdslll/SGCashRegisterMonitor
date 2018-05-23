@@ -24,7 +24,7 @@ public class LogDirHandlerTest {
     private LocalLogFileHandler localLogFileHandler;
     private static final Log logger = LogFactory.getLog(LogDirHandlerTest.class);
 
-    @Before
+    //@Before
     public void prepare() {
         String OsName = System.getProperty("os.name");
         LogUtil.info(logger, OsName);
@@ -39,12 +39,12 @@ public class LogDirHandlerTest {
         }
     }
 
-    @Test
+    //@Test
     public void test1CopyFile() throws IOException {
         //localLogFileHandler.copyLogFileAndConvertToUTF8();
     }
 
-    @Test
+    //@Test
     public void test2PartitionFile() throws IOException {
         //复制文件
         localLogFileHandler.copyLogFileAndConvertToUTF8();
@@ -58,13 +58,13 @@ public class LogDirHandlerTest {
         //localLogFileHandler.partitionFile();
     }
 
-    @Test
+    //@Test
     public void test3CheckFile() throws IOException {
         localLogFileHandler.checkFileAmount();
         localLogFileHandler.checkFileLine();
     }
 
-    @After
+    //@After
     public void clean() throws FileNotFoundException {
         //FileUtil.cleanOutputFile(localLogFileHandler.getLogFileOutPath());
     }
