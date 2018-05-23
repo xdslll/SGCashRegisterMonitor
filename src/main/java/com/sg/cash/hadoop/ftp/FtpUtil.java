@@ -1,5 +1,6 @@
 package com.sg.cash.hadoop.ftp;
 
+import com.sg.cash.util.ConfigUtil;
 import com.sg.cash.util.FileUtil;
 import org.apache.commons.net.ftp.*;
 
@@ -15,10 +16,10 @@ import java.util.regex.Pattern;
  */
 public class FtpUtil {
 
-    public static final String HOSTNAME = "192.168.57.10";
-    public static final int PORT = 21;
-    public static final String USERNAME = "FtpUser";
-    public static final String PASSWORD = "Xds840126";
+    public static final String HOSTNAME = ConfigUtil.get("ftp_host");
+    public static final int PORT = ConfigUtil.getInt("ftp_port");
+    public static final String USERNAME = ConfigUtil.get("ftp_username");
+    public static final String PASSWORD = ConfigUtil.get("ftp_password");
 
     public FTPClient ftpClient = null;
 
@@ -41,6 +42,11 @@ public class FtpUtil {
         ftpClient.setDefaultTimeout(60 * 1000);
         try {
             System.out.println("开始连接ftp站点");
+            System.out.println("地址：" + HOSTNAME);
+            System.out.println("端口号：" + PORT);
+            System.out.println("用户名：" + USERNAME);
+            System.out.println("密码：" + PASSWORD);
+
             ftpClient.connect(HOSTNAME, PORT);
             ftpClient.login(USERNAME, PASSWORD);
             int replyCode = ftpClient.getReplyCode();
