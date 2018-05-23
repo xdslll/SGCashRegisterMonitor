@@ -123,11 +123,25 @@ public class Client {
     public static final String SQOOP_HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/result_avg_cash_time";
 
     public static void main(String[] args) {
+        if (args.length < 2) {
+            throw new RuntimeException("参数为空");
+        }
         long _START = System.currentTimeMillis();
-        sync();
+        String type = args[0];
+        String cmd = args[1];
+        if (type.equals("ftp")) {
+            if (cmd.equals("check")) {
+                ftpCheck();
+            }
+        }
+        //sync();
         //check();
         long _END = System.currentTimeMillis();
         System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
+    }
+
+    public static void ftpCheck() {
+        FtpUtil.check(FTP_PATH);
     }
 
     public static void check() {
