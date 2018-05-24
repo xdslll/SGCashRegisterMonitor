@@ -2,7 +2,9 @@ package com.sg.cash.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author xiads
@@ -21,7 +23,7 @@ public class ConfigUtil {
             Properties basicProp = new Properties();
             basicProp.load(ConfigUtil.class.getResourceAsStream(BASIC_PATH));
             String env = basicProp.getProperty("env");
-            System.out.println("当前配置环境：" + env);
+            // System.out.println("当前配置环境：" + env);
 
             p = new Properties();
             InputStream in;
@@ -44,6 +46,9 @@ public class ConfigUtil {
     }
 
     public static void showAllConfig() {
-        p.list(System.out);
+        Set<Map.Entry<Object, Object>> entrySet = p.entrySet();
+        for (Map.Entry<Object, Object> entry : entrySet) {
+            System.out.println(entry.getKey() + "=" + entry.getValue());
+        }
     }
 }

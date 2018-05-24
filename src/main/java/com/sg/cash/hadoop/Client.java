@@ -174,7 +174,7 @@ public class Client {
         String cmd = args.length >= 2 ? args[1] : "";
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         System.out.println("Current time:" + df.format(new Date()));
-        System.out.println("Your command is: " + type + " " + cmd);
+        // System.out.println("Your command is: " + type + " " + cmd);
         if (type.equals("ftp")) {
             if (cmd.equals("check")) {
                 ftpCheck();
