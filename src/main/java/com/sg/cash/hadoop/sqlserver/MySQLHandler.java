@@ -1,7 +1,7 @@
 package com.sg.cash.hadoop.sqlserver;
 
-import com.sg.cash.hadoop.Client;
-import org.apache.commons.lang.StringUtils;
+import com.sg.cash.util.BaseDbRunnable;
+import com.sg.cash.util.DBUtil;
 
 import java.sql.*;
 
@@ -15,27 +15,34 @@ public class MySQLHandler {
     /**
      * SQLServer用户名
      */
-    private static final String MYSQL_USER_NAME = Client.MYSQL_USER;
+    private String mysqlUser;
 
     /**
      * SQLServer密码
      */
-    private static final String MYSQL_PWD = Client.MYSQL_PASSWORD;
+    private String mysqlPassword;
 
     /**
      * SQLServer JDBC驱动名
      */
-    private static final String MYSQL_DRIVER_NAME = Client.MYSQL_DRIVER_NAME;
+    private String mysqlDriverName;
 
     /**
      * SQLServer连接字符串
      */
-    private static final String MYSQL_DB_URL = Client.MYSQL_URL;
+    private String mysqlUrl;
 
-    public Connection connectToMySQL() throws ClassNotFoundException, SQLException {
-        Class.forName(MYSQL_DRIVER_NAME);
+    public MySQLHandler(String mysqlDriverName, String mysqlUrl, String mysqlUser, String mysqlPassword) {
+        this.mysqlDriverName = mysqlDriverName;
+        this.mysqlUrl = mysqlUrl;
+        this.mysqlUser = mysqlUser;
+        this.mysqlPassword = mysqlPassword;
+    }
+
+    public Connection connect() throws ClassNotFoundException, SQLException {
+        Class.forName(mysqlDriverName);
         Connection conn = DriverManager.getConnection(
-                MYSQL_DB_URL, MYSQL_USER_NAME, MYSQL_PWD);
+                mysqlUrl, mysqlUser, mysqlPassword);
         System.out.println("连接MySQL数据库成功");
         return conn;
     }
@@ -144,23 +151,17 @@ public class MySQLHandler {
         return r;
     }
 
-    public static void main(String[] args) {
-        MySQLHandler handler = new MySQLHandler();
-        Connection conn = null;
-        try {
-            conn = handler.connectToMySQL();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+    public void checkDb(Connection conn, String dbName) {
+        DBUtil.doExecute(conn, new BaseDbRunnable() {
+            @Override
+            public void run(Statement statement) throws Exception {
+                String sql = "select table_name from information_schema.tables where table_schema='" + dbName + "'";
+                ResultSet rs = statement.executeQuery(sql);
+                while (rs.next()) {
+                    System.out.println(rs.getString("table_name"));
                 }
+                rs.close();
             }
-        }
+        });
     }
 }

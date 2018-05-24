@@ -43,4 +43,7 @@ public class ConfigUtil {
         return Integer.valueOf(p.getProperty(key));
     }
 
+    public static void showAllConfig() {
+        p.list(System.out);
+    }
 }

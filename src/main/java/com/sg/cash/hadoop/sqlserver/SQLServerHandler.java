@@ -32,6 +32,7 @@ public class SQLServerHandler {
         Class.forName(sqlServerDriverName);
         Connection conn = DriverManager.getConnection(
                 sqlServerDbUrl, sqlServerUser, sqlServerPwd);
+        System.out.println("连接SQLServer数据库成功");
         return conn;
     }
 
@@ -176,8 +177,9 @@ public class SQLServerHandler {
                 List<HupuData> hupuDataList = sqlServerHandler.getHupuData(sqlServerConn, db);
                 System.out.println(hupuDataList);
                 // 将互普数据写入MySQL
-                MySQLHandler mySQLHandler = new MySQLHandler();
-                mySQLConn = mySQLHandler.connectToMySQL();
+                MySQLHandler mySQLHandler = new MySQLHandler(Client.MYSQL_DRIVER_NAME,
+                        Client.MYSQL_URL, Client.MYSQL_USER, Client.MYSQL_PASSWORD);
+                mySQLConn = mySQLHandler.connect();
                 for (HupuData data : hupuDataList) {
                     if (data.getGroupName().equals("Unclassified")) {
                         continue;

@@ -3,6 +3,7 @@ package com.sg.cash.hadoop;
 import com.sg.cash.hadoop.ftp.FtpUtil;
 import com.sg.cash.hadoop.hdfs.HdfsUtil;
 import com.sg.cash.hadoop.hive.HiveUtil;
+import com.sg.cash.hadoop.sqlserver.MySQLHandler;
 import com.sg.cash.hadoop.sqlserver.SQLServerHandler;
 import com.sg.cash.hadoop.sqoop.SqoopUtil;
 import com.sg.cash.local.LocalLogFileHandler;
@@ -106,9 +107,9 @@ public class Client {
      * 门店相关的文件
      */
     public static final String HDFS_UPLOAD_STORE_DIR = ConfigUtil.get("hdfs_upload_store_dir");
-    public static final String LOCAL_ORIGINAL_STORE_FILE_PATH = "/Users/apple/Desktop/store.csv";
-    public static final String LOCAL_NEW_STORE_FILE_PATH = "/Users/apple/Desktop/store2.csv";
-    public static final String LOCAL_FINAL_STORE_FILE_PATH = "/Users/apple/Desktop/store3.csv";
+    public static final String LOCAL_ORIGINAL_STORE_FILE_PATH = ConfigUtil.get("local_original_store_file_path");
+    public static final String LOCAL_NEW_STORE_FILE_PATH = ConfigUtil.get("local_new_store_file_path");;
+    public static final String LOCAL_FINAL_STORE_FILE_PATH = ConfigUtil.get("local_final_store_file_path");;
 
     /**
      * 收银机相关的文件
@@ -119,18 +120,18 @@ public class Client {
     /**
      * MySQL相关参数
      */
-    public static final String MYSQL_URL = "jdbc:mysql://www.mac-bigdata-01.com:3306/sg?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull";
-    public static final String MYSQL_USER = "root";
-    public static final String MYSQL_PASSWORD = "123456";
-    public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
+    public static final String MYSQL_URL = ConfigUtil.get("mysql_url");
+    public static final String MYSQL_USER = ConfigUtil.get("mysql_user");
+    public static final String MYSQL_PASSWORD = ConfigUtil.get("mysql_password");
+    public static final String MYSQL_DRIVER_NAME = ConfigUtil.get("mysql_driver_name");
 
     /**
      * sqoop相关配置
      */
-    public static final String SQOOP_MYSQL_URL = "jdbc:mysql://www.mac-bigdata-01.com:3306/sg";
-    public static final String SQOOP_TABLE_NAME = "result_avg_cash_time";
-    public static final String SQOOP_TABLE_NAME2 = "result_avg_machine_effective";
-    public static final String SQOOP_HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/result_avg_cash_time";
+    public static final String SQOOP_MYSQL_URL = ConfigUtil.get("sqoop_mysql_url");
+    public static final String SQOOP_TABLE_NAME = ConfigUtil.get("sqoop_table_name");
+    public static final String SQOOP_TABLE_NAME2 = ConfigUtil.get("sqoop_table_name2");
+    public static final String SQOOP_HIVE_WAREHOUSE = ConfigUtil.get("sqoop_hive_warehouse");
 
     /**
      * SQLServer IP
@@ -206,6 +207,8 @@ public class Client {
             } else if (cmd.equals("sync")) {
                 syncHupu();
             }
+        } else if (type.equals("config")) {
+            ConfigUtil.showAllConfig();
         } else if (type.equals("help")) {
             showHelp();
         } else {
@@ -217,23 +220,33 @@ public class Client {
     }
 
     private static void showHelp() {
-        System.out.println("You can use following command...");
-        System.out.println("- ftp");
-        System.out.println("  > check : show ftp status");
-        System.out.println("  > check-zero : show number of zero files");
-        System.out.println("  > sync : sync data from ftp");
-        System.out.println("- local");
-        System.out.println("  > check : check status of local files");
-        System.out.println("  > convert : convert file encoding from gbk to utf-8");
-        System.out.println("- hdfs");
-        System.out.println("  > check : show hdfs status");
-        System.out.println("  > upload : upload files to hdfs");
-        System.out.println("- hive");
-        System.out.println("  > check : show hive status");
-        System.out.println("  > upload : import files to hive");
-        System.out.println("- hupu");
-        System.out.println("  > check : show hupu databases");
-        System.out.println("  > sync : sync data from hupu databases");
+        System.out.println("usage: enford [type] [command]" +
+                "\n" +
+                "ftp     control ftp server sync\n" +
+                "   check      show ftp status\n" +
+                "   check-zero show number of zero files\n" +
+                "   sync       sync data from ftp\n" +
+                "\n" +
+                "local   sync data from ftp to localhost\n" +
+                "   check      check status of local files\n" +
+                "   convert    convert file encoding from gbk to utf-8\n" +
+                "\n" +
+                "hdfs    upload data to hadoop platform\n" +
+                "   check      show hdfs status\n" +
+                "   upload     upload files to hdfs\n" +
+                "\n" +
+                "hive    upload data to hive warehouse\n" +
+                "   check      show hive status\n" +
+                "   upload     import files to hive\n" +
+                "\n" +
+                "hupu    sync data from hupu databases\n" +
+                "   check      show hupu databases\n" +
+                "   sync       sync data from hupu databases\n" +
+                "\n" +
+                "config  show all config\n" +
+                "\n" +
+                "command 'enford help' may show something helpful for you.\n" +
+                "see 'enford help <type>' or 'enford help <command>' to get more informations.\n");
     }
 
     private static void syncHupu() {
@@ -241,18 +254,24 @@ public class Client {
     }
 
     private static void checkHupu() {
-        Connection conn = null;
-        SQLServerHandler handler = new SQLServerHandler(SQL_SERVER_DRIVER_NAME, SQL_SERVER_DB_URL, SQL_SERVER_USER, SQL_SERVER_PWD);
+        Connection sqlServerConn = null;
+        Connection mysqlConn = null;
+        SQLServerHandler sqlServerHandler = new SQLServerHandler(SQL_SERVER_DRIVER_NAME, SQL_SERVER_DB_URL, SQL_SERVER_USER, SQL_SERVER_PWD);
+        MySQLHandler mySQLHandler = new MySQLHandler(MYSQL_DRIVER_NAME, MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD);
         try {
             System.out.println("正在连接SQLServer...");
-            conn = handler.connect();
-            System.out.println("SQLServer连接成功!");
-            System.out.println(SQL_SERVER_DB_URL);
-            handler.checkHupuDbNames(conn);
+            sqlServerConn = sqlServerHandler.connect();
+            System.out.println("正在检查数据库...");
+            sqlServerHandler.checkHupuDbNames(sqlServerConn);
+            System.out.println("正在连接MySQL...");
+            mysqlConn = mySQLHandler.connect();
+            System.out.println("正在检查数据库...");
+            mySQLHandler.checkDb(mysqlConn, ConfigUtil.get("mysql_db_name"));
         } catch(Exception ex) {
             ex.printStackTrace();
         } finally {
-            close(conn);
+            close(sqlServerConn);
+            close(mysqlConn);
         }
 
     }

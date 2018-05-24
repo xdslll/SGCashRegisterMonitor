@@ -1,6 +1,8 @@
 package com.sg.cash.hadoop.hive;
 
 import com.sg.cash.hadoop.Client;
+import com.sg.cash.util.BaseDbRunnable;
+import com.sg.cash.util.DBUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -349,38 +351,8 @@ public class HiveUtil {
         uploadToHiveWarehouse();
     }
 
-    public abstract static class BaseHiveRunnable {
-        /**
-         * 执行sql语句
-         *
-         * @param statement
-         * @throws Exception
-         */
-        public abstract void run(Statement statement) throws Exception;
-    }
-
-    public void doExecute(Connection conn, BaseHiveRunnable r) {
-        // hive查询对象
-        Statement stmt = null;
-        try {
-            // 获取查询对象
-            stmt = conn.createStatement();
-            r.run(stmt);
-        } catch(Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     public void checkDb(Connection conn, String hiveDb) {
-        doExecute(conn, new BaseHiveRunnable() {
+        DBUtil.doExecute(conn, new BaseDbRunnable() {
             @Override
             public void run(Statement statement) throws SQLException {
                 if (existDatabase(statement, hiveDb)) {
@@ -393,7 +365,7 @@ public class HiveUtil {
     }
 
     public void checkTable(Connection conn, String hiveDb, String hiveTableLog) {
-        doExecute(conn, new BaseHiveRunnable() {
+        DBUtil.doExecute(conn, new BaseDbRunnable() {
             @Override
             public void run(Statement statement) throws SQLException {
                 if (existTable(statement, hiveDb + "." + hiveTableLog)) {
