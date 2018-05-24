@@ -349,4 +349,59 @@ public class HiveUtil {
         uploadToHiveWarehouse();
     }
 
+    public abstract static class BaseHiveRunnable {
+        /**
+         * 执行sql语句
+         *
+         * @param statement
+         * @throws Exception
+         */
+        public abstract void run(Statement statement) throws Exception;
+    }
+
+    public void doExecute(Connection conn, BaseHiveRunnable r) {
+        // hive查询对象
+        Statement stmt = null;
+        try {
+            // 获取查询对象
+            stmt = conn.createStatement();
+            r.run(stmt);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void checkDb(Connection conn, String hiveDb) {
+        doExecute(conn, new BaseHiveRunnable() {
+            @Override
+            public void run(Statement statement) throws SQLException {
+                if (existDatabase(statement, hiveDb)) {
+                    System.out.println("数据库[" + hiveDb + "]存在");
+                } else {
+                    System.out.println("数据库[" + hiveDb + "]不存在");
+                }
+            }
+        });
+    }
+
+    public void checkTable(Connection conn, String hiveDb, String hiveTableLog) {
+        doExecute(conn, new BaseHiveRunnable() {
+            @Override
+            public void run(Statement statement) throws SQLException {
+                if (existTable(statement, hiveDb + "." + hiveTableLog)) {
+                    System.out.println("数据库[" + hiveDb + "." + hiveTableLog + "]存在");
+                } else {
+                    System.out.println("数据库[" + hiveDb + "." + hiveTableLog + "]不存在");
+                }
+            }
+        });
+    }
 }

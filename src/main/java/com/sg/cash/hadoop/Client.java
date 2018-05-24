@@ -8,6 +8,8 @@ import com.sg.cash.hadoop.sqoop.SqoopUtil;
 import com.sg.cash.local.LocalLogFileHandler;
 import com.sg.cash.util.ConfigUtil;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -62,37 +64,37 @@ public class Client {
     /**
      * hive连接字符串
      */
-    public static final String HIVE_URL = "jdbc:hive2://www.mac-bigdata-01.com:10000/sg2";
+    public static final String HIVE_URL = ConfigUtil.get("hive_url");
 
     /**
      * hive连接用户
      */
-    public static final String HIVE_USER = "hadoop";
+    public static final String HIVE_USER = ConfigUtil.get("hive_user");
 
     /**
      * hive连接密码
      */
-    public static final String HIVE_PASSWORD = "123456";
+    public static final String HIVE_PASSWORD = ConfigUtil.get("hive_password");
 
     /**
      * hive数据库名
      */
-    public static final String HIVE_DB = "sg2";
+    public static final String HIVE_DB = ConfigUtil.get("hive_db");
 
     /**
      * hive日志表名
      */
-    public static final String HIVE_TABLE_LOG = "tbl_sg_report_cash_detail";
+    public static final String HIVE_TABLE_LOG = ConfigUtil.get("hive_table_log");
 
     /**
      * hive门店表名
      */
-    public static final String HIVE_TABLE_STORE = "tbl_sg_store_info";
+    public static final String HIVE_TABLE_STORE = ConfigUtil.get("hive_table_store");
 
     /**
      * hive收银机表名
      */
-    public static final String HIVE_TABLE_MACHINE = "tbl_sg_machine_info";
+    public static final String HIVE_TABLE_MACHINE = ConfigUtil.get("hive_table_machine");
 
     /**
      * hive仓库地址
@@ -122,10 +124,44 @@ public class Client {
     public static final String MYSQL_PASSWORD = "123456";
     public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
+    /**
+     * sqoop相关配置
+     */
     public static final String SQOOP_MYSQL_URL = "jdbc:mysql://www.mac-bigdata-01.com:3306/sg";
     public static final String SQOOP_TABLE_NAME = "result_avg_cash_time";
     public static final String SQOOP_TABLE_NAME2 = "result_avg_machine_effective";
     public static final String SQOOP_HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/result_avg_cash_time";
+
+    /**
+     * SQLServer IP
+     */
+    public static final String SQL_SERVER_IP = ConfigUtil.get("sql_server_ip");
+
+    /**
+     * SQLServer端口号
+     */
+    public static final int SQL_SERVER_PORT = ConfigUtil.getInt("sql_server_port");
+
+    /**
+     * SQLServer用户名
+     */
+    public static final String SQL_SERVER_USER = ConfigUtil.get("sql_server_user");
+
+    /**
+     * SQLServer密码
+     */
+    public static final String SQL_SERVER_PWD = ConfigUtil.get("sql_server_pwd");
+
+    /**
+     * SQLServer JDBC驱动名
+     */
+    public static final String SQL_SERVER_DRIVER_NAME = ConfigUtil.get("sql_server_driver_name");
+
+    /**
+     * SQLServer连接字符串
+     */
+    public static final String SQL_SERVER_DB_URL = "jdbc:sqlserver://" + SQL_SERVER_IP + ":"
+            + SQL_SERVER_PORT;
 
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -158,6 +194,18 @@ public class Client {
             } else if (cmd.equals("upload")) {
                 hdfsUpload();
             }
+        } else if (type.equals("hive")) {
+            if (cmd.equals("check")) {
+                hiveCheck();
+            } else if (cmd.equals("upload")) {
+                hiveUpload();
+            }
+        } else if (type.equals("hupu")) {
+            if (cmd.equals("check")) {
+                checkHupu();
+            } else if (cmd.equals("sync")) {
+                syncHupu();
+            }
         } else if (type.equals("help")) {
             showHelp();
         } else {
@@ -171,15 +219,66 @@ public class Client {
     private static void showHelp() {
         System.out.println("You can use following command...");
         System.out.println("- ftp");
-        System.out.println("    > check");
-        System.out.println("    > check-zero");
-        System.out.println("    > sync");
+        System.out.println("  > check : show ftp status");
+        System.out.println("  > check-zero : show number of zero files");
+        System.out.println("  > sync : sync data from ftp");
         System.out.println("- local");
-        System.out.println("    > check");
-        System.out.println("    > convert");
+        System.out.println("  > check : check status of local files");
+        System.out.println("  > convert : convert file encoding from gbk to utf-8");
         System.out.println("- hdfs");
-        System.out.println("    > check");
-        System.out.println("    > upload");
+        System.out.println("  > check : show hdfs status");
+        System.out.println("  > upload : upload files to hdfs");
+        System.out.println("- hive");
+        System.out.println("  > check : show hive status");
+        System.out.println("  > upload : import files to hive");
+        System.out.println("- hupu");
+        System.out.println("  > check : show hupu databases");
+        System.out.println("  > sync : sync data from hupu databases");
+    }
+
+    private static void syncHupu() {
+        SQLServerHandler.syncHupuData();
+    }
+
+    private static void checkHupu() {
+        Connection conn = null;
+        SQLServerHandler handler = new SQLServerHandler(SQL_SERVER_DRIVER_NAME, SQL_SERVER_DB_URL, SQL_SERVER_USER, SQL_SERVER_PWD);
+        try {
+            System.out.println("正在连接SQLServer...");
+            conn = handler.connect();
+            System.out.println("SQLServer连接成功!");
+            System.out.println(SQL_SERVER_DB_URL);
+            handler.checkHupuDbNames(conn);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(conn);
+        }
+
+    }
+
+    private static void hiveCheck() {
+        Connection conn = null;
+        try {
+            HiveUtil hiveUtil = new HiveUtil(HIVE_URL, HIVE_USER, HIVE_PASSWORD);
+            conn = hiveUtil.connect();
+            hiveUtil.checkDb(conn, HIVE_DB);
+            hiveUtil.checkTable(conn, HIVE_DB, HIVE_TABLE_LOG);
+            hiveUtil.checkTable(conn, HIVE_DB, HIVE_TABLE_STORE);
+            hiveUtil.checkTable(conn, HIVE_DB, HIVE_TABLE_MACHINE);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(conn);
+        }
+    }
+
+    private static void hiveUpload() {
+        if (!HiveUtil.uploadToHiveWarehouse()) {
+            System.out.println("上传hive仓库出错!");
+        } else {
+            System.out.println("上传hive仓库成功!");
+        }
     }
 
     private static void hdfsCheck() {
@@ -306,5 +405,15 @@ public class Client {
 
         // 自动导入互普的数据
         SQLServerHandler.syncHupuData();
+    }
+
+    public static void close(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

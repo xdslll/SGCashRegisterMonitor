@@ -1,5 +1,7 @@
 package com.sg.cash.hadoop.sqlserver;
 
+import com.sg.cash.hadoop.Client;
+
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -14,44 +16,32 @@ import java.util.regex.Pattern;
  */
 public class SQLServerHandler {
 
-    /**
-     * SQLServer IP
-     */
-    private static final String SQL_SERVER_IP = "192.168.57.10";
+    private  String sqlServerDriverName;
+    private  String sqlServerDbUrl;
+    private  String sqlServerUser;
+    private  String sqlServerPwd;
 
-    /**
-     * SQLServer端口号
-     */
-    private static final int SQL_SERVER_PORT = 1433;
+    public SQLServerHandler(String sqlServerDriverName, String sqlServerDbUrl, String sqlServerUser, String sqlServerPwd) {
+        this.sqlServerDriverName = sqlServerDriverName;
+        this.sqlServerDbUrl = sqlServerDbUrl;
+        this.sqlServerUser = sqlServerUser;
+        this.sqlServerPwd = sqlServerPwd;
+    }
 
-    /**
-     * SQLServer用户名
-     */
-    private static final String SQL_SERVER_USER_NAME ="sa";
+    public Connection connect() throws ClassNotFoundException, SQLException {
+        Class.forName(sqlServerDriverName);
+        Connection conn = DriverManager.getConnection(
+                sqlServerDbUrl, sqlServerUser, sqlServerPwd);
+        return conn;
+    }
 
-    /**
-     * SQLServer密码
-     */
-    private static final String SQL_SERVER_PWD = "Xds840126";
-
-    /**
-     * SQLServer JDBC驱动名
-     */
-    private static final String SQL_SERVER_DRIVER_NAME ="com.microsoft.sqlserver.jdbc.SQLServerDriver";
-
-    /**
-     * SQLServer连接字符串
-     */
-    private static final String SQL_SERVER_DB_URL ="jdbc:sqlserver://" + SQL_SERVER_IP + ":"
-            + SQL_SERVER_PORT;
-
-    public Connection connectToSQLServer() throws ClassNotFoundException, SQLException {
+    /*public Connection connectToSQLServer() throws ClassNotFoundException, SQLException {
         Class.forName(SQL_SERVER_DRIVER_NAME);
         Connection conn = DriverManager.getConnection(
                 SQL_SERVER_DB_URL, SQL_SERVER_USER_NAME, SQL_SERVER_PWD);
         System.out.println("连接SQL Server数据库成功");
         return conn;
-    }
+    }*/
 
     public List<HupuData> getHupuData(Connection conn, String dbName) {
         String sql = "select f.AGT_GRP_ID as group_id, f.AGT_GRP_NAME as group_name, f.APP_AGT_ID as machine_id, f.AGT_NAME as machine_name," +
@@ -149,7 +139,7 @@ public class SQLServerHandler {
                 }
             }
         }
-        System.out.println(dbList);
+        // System.out.println(dbList);
         return dbList.toArray(new String[]{});
     }
 
@@ -171,12 +161,14 @@ public class SQLServerHandler {
     }
 
     public static void syncHupuData() {
-        SQLServerHandler sqlServerHandler = new SQLServerHandler();
+        SQLServerHandler sqlServerHandler = new SQLServerHandler(
+                Client.SQL_SERVER_DRIVER_NAME, Client.SQL_SERVER_DB_URL,
+                Client.SQL_SERVER_USER, Client.SQL_SERVER_PWD);
         Connection sqlServerConn = null;
         Connection mySQLConn = null;
         try {
             // 连接互普SQLServer服务器
-            sqlServerConn = sqlServerHandler.connectToSQLServer();
+            sqlServerConn = sqlServerHandler.connect();
             // 获取互普所有数据库名
             String[] dbList = sqlServerHandler.getHupuDatabaseName(sqlServerConn);
             for (String db : dbList) {
@@ -191,11 +183,7 @@ public class SQLServerHandler {
                         continue;
                     }
                     // 将互普数据插入mysql
-                    int r = mySQLHandler.insertHupuData(mySQLConn, data);
-                    /*if (r == 1) {
-                        // 将互普数据与收银机效率数据合并
-                        mySQLHandler.updateHupuData(mySQLConn, data);
-                    }*/
+                    mySQLHandler.insertHupuData(mySQLConn, data);
                     mySQLHandler.updateHupuData(mySQLConn, data);
                 }
             }
@@ -218,6 +206,13 @@ public class SQLServerHandler {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    public void checkHupuDbNames(Connection conn) {
+        String[] dbNames = getHupuDatabaseName(conn);
+        for (String dbName : dbNames) {
+            System.out.println(dbName);
         }
     }
 }
