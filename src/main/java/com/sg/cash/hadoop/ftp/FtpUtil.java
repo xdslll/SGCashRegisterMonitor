@@ -507,7 +507,6 @@ public class FtpUtil {
             FTPClient ftpClient = ftpUtil.getFtpClient();
             System.out.println("autodetect utf8:" + ftpClient.getAutodetectUTF8());
             System.out.println("charset:" + ftpClient.getCharset());
-            System.out.println("connection timeout:" + ftpClient.getConnectTimeout());
             System.out.println("local address:" + ftpClient.getLocalAddress().toString());
             System.out.println("local port:" + ftpClient.getLocalPort());
             System.out.println("remote address:" + ftpClient.getRemoteAddress().toString());
@@ -522,16 +521,18 @@ public class FtpUtil {
             System.out.println("control keep alive timeout:" + ftpClient.getControlKeepAliveTimeout());
             System.out.println("control keep alive reply timeout:" + ftpClient.getControlKeepAliveReplyTimeout());
             System.out.println("so timeout:" + ftpClient.getSoTimeout());
+            System.out.println("ftp path:" + ftpPath);
 
-            System.out.println("changeWorkingDirectory(" + ftpPath + ")" + ftpUtil.changeWorkingDirectory(ftpPath));
-            System.out.println("list:" + ftpClient.list());
-            System.out.println("listFiles...");
-            System.out.println(ftpClient.listFiles(ftpPath).length);
+            // System.out.println("changeWorkingDirectory(" + ftpPath + ")" + ftpUtil.changeWorkingDirectory(ftpPath));
+            // System.out.println("list:" + ftpClient.list());
+            // System.out.println(ftpClient.listFiles(ftpPath).length);
+            // System.out.println(ftpClient.listNames(ftpPath).length);
             // 统计文件夹总数
-            // FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
-            // System.out.println("文件夹总数:" + dirs.length);
+            ftpClient.enterLocalPassiveMode();
+            FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
+            System.out.println("文件夹总数:" + dirs.length);
             // 统计文件总数
-            // System.out.println("文件总数:" + count(ftpPath, ftpClient));
+            System.out.println("文件总数:" + count(ftpPath, ftpClient));
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
