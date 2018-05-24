@@ -35,11 +35,11 @@ public class FtpUtil {
     public void connect() throws SocketException {
         ftpClient = new FTPClient();
         ftpClient.setControlEncoding("UTF-8");
-        ftpClient.setDataTimeout(300 * 1000);
-        ftpClient.setConnectTimeout(300 * 1000);
-        ftpClient.setControlKeepAliveReplyTimeout(300 * 1000);
-        ftpClient.setControlKeepAliveTimeout(300);
-        ftpClient.setDefaultTimeout(300 * 1000);
+        ftpClient.setDataTimeout(600 * 1000);
+        ftpClient.setConnectTimeout(600 * 1000);
+        ftpClient.setControlKeepAliveReplyTimeout(600 * 1000);
+        ftpClient.setControlKeepAliveTimeout(600);
+        ftpClient.setDefaultTimeout(600 * 1000);
         try {
             System.out.println("开始连接ftp站点");
             System.out.println("地址：" + HOSTNAME);
@@ -52,7 +52,7 @@ public class FtpUtil {
             int replyCode = ftpClient.getReplyCode();
             if (!FTPReply.isPositiveCompletion(replyCode)) {
                 System.out.println("连接失败");
-                //ftpClient.setSoTimeout(60 * 1000);
+                ftpClient.setSoTimeout(600 * 1000);
             } else {
                 System.out.println("连接成功");
             }
@@ -518,10 +518,15 @@ public class FtpUtil {
             System.out.println("changeToParentDirectory:" + ftpClient.changeToParentDirectory());
             System.out.println("isAvailable:" + ftpClient.isAvailable());
             System.out.println("isConnected:" + ftpClient.isConnected());
+            System.out.println("default timeout:" + ftpClient.getDefaultTimeout());
+            System.out.println("connect timeout:" + ftpClient.getConnectTimeout());
+            System.out.println("control keep alive timeout:" + ftpClient.getControlKeepAliveTimeout());
+            System.out.println("control keep alive reply timeout:" + ftpClient.getControlKeepAliveReplyTimeout());
+            System.out.println("so timeout:" + ftpClient.getSoTimeout());
+
             // 统计文件夹总数
-            int dirNumber = 0;
             FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
-            System.out.println("文件夹总数:" + (dirNumber = dirs.length));
+            System.out.println("文件夹总数:" + dirs.length);
             // 统计文件总数
             System.out.println("文件总数:" + count(ftpPath, ftpClient));
         } catch (Exception ex) {
