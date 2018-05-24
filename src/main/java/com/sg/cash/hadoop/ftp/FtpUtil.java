@@ -35,11 +35,11 @@ public class FtpUtil {
     public void connect() throws SocketException {
         ftpClient = new FTPClient();
         ftpClient.setControlEncoding("UTF-8");
-        ftpClient.setDataTimeout(60 * 1000);
-        ftpClient.setConnectTimeout(60 * 1000);
-        //ftpClient.setControlKeepAliveReplyTimeout(60 * 1000);
-        //ftpClient.setControlKeepAliveTimeout(60);
-        ftpClient.setDefaultTimeout(60 * 1000);
+        ftpClient.setDataTimeout(300 * 1000);
+        ftpClient.setConnectTimeout(300 * 1000);
+        ftpClient.setControlKeepAliveReplyTimeout(300 * 1000);
+        ftpClient.setControlKeepAliveTimeout(300);
+        ftpClient.setDefaultTimeout(300 * 1000);
         try {
             System.out.println("开始连接ftp站点");
             System.out.println("地址：" + HOSTNAME);
