@@ -523,8 +523,10 @@ public class FtpUtil {
             System.out.println("control keep alive reply timeout:" + ftpClient.getControlKeepAliveReplyTimeout());
             System.out.println("so timeout:" + ftpClient.getSoTimeout());
 
+            System.out.println("changeWorkingDirectory(" + ftpPath + ")" + ftpUtil.changeWorkingDirectory(ftpPath));
             System.out.println("list:" + ftpClient.list());
-            System.out.println("listNames:" + ftpClient.listNames().length);
+            System.out.println("listFiles...");
+            System.out.println(ftpClient.listFiles(ftpPath).length);
             // 统计文件夹总数
             // FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
             // System.out.println("文件夹总数:" + dirs.length);
