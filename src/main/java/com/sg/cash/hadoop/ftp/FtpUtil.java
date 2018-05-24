@@ -515,7 +515,6 @@ public class FtpUtil {
             System.out.println("status:" + ftpClient.getStatus());
             System.out.println("system type:" + ftpClient.getSystemType());
             System.out.println("tcp no delay:" + ftpClient.getTcpNoDelay());
-            System.out.println("changeToParentDirectory:" + ftpClient.changeToParentDirectory());
             System.out.println("isAvailable:" + ftpClient.isAvailable());
             System.out.println("isConnected:" + ftpClient.isConnected());
             System.out.println("default timeout:" + ftpClient.getDefaultTimeout());
@@ -524,11 +523,13 @@ public class FtpUtil {
             System.out.println("control keep alive reply timeout:" + ftpClient.getControlKeepAliveReplyTimeout());
             System.out.println("so timeout:" + ftpClient.getSoTimeout());
 
+            System.out.println("list:" + ftpClient.list());
+            System.out.println("listNames:" + ftpClient.listNames().length);
             // 统计文件夹总数
-            FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
-            System.out.println("文件夹总数:" + dirs.length);
+            // FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
+            // System.out.println("文件夹总数:" + dirs.length);
             // 统计文件总数
-            System.out.println("文件总数:" + count(ftpPath, ftpClient));
+            // System.out.println("文件总数:" + count(ftpPath, ftpClient));
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
