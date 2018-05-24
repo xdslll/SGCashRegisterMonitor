@@ -12,11 +12,24 @@ import java.util.Properties;
 public class ConfigUtil {
 
     private static Properties p;
+    private static String BASIC_PATH = "/config-basic.properties";
+    private static String DEV_PATH ="/config-dev.properties";
+    private static String PROD_PATH ="/config-prod.properties";
 
     static {
         try {
+            Properties basicProp = new Properties();
+            basicProp.load(ConfigUtil.class.getResourceAsStream(BASIC_PATH));
+            String env = basicProp.getProperty("env");
+            System.out.println("当前配置环境：" + env);
+
             p = new Properties();
-            InputStream in = ConfigUtil.class.getResourceAsStream("/config.properties");
+            InputStream in;
+            if (env.equals("dev")) {
+                in = ConfigUtil.class.getResourceAsStream(DEV_PATH);
+            } else {
+                in = ConfigUtil.class.getResourceAsStream(PROD_PATH);
+            }
             p.load(in);
         } catch(IOException ex) {
             ex.printStackTrace();

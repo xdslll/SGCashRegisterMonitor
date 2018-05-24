@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.hadoop.io.IOUtils;
 
 import java.io.*;
@@ -666,5 +667,55 @@ public class HdfsUtil {
             }
         }
         return count;
+    }
+
+    /**
+     * 检查被激活的hdfs连接
+     * @param hdfsRemoteUri
+     * @param hdfsRemoteUri2
+     * @param hdfsUser
+     * @return
+     */
+    public static String checkActiveHdfs(String hdfsRemoteUri, String hdfsRemoteUri2, String hdfsUser) {
+        FileSystem hdfs = null;
+        FileSystem hdfs2 = null;
+        try {
+            hdfs = createHdfs(hdfsRemoteUri, hdfsUser);
+            hdfs2 = createHdfs(hdfsRemoteUri2, hdfsUser);
+            Path p = new Path("/");
+            try {
+                if (hdfs.exists(p)) {
+                    return hdfsRemoteUri;
+                }
+            } catch(Exception ex) {
+                // ex.printStackTrace();
+                System.out.println(ex.getMessage());
+            }
+            try {
+                if (hdfs2.exists(p)) {
+                    return hdfsRemoteUri2;
+                }
+            } catch(Exception ex) {
+                // ex.printStackTrace();
+                System.out.println(ex.getMessage());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(hdfs);
+            close(hdfs2);
+        }
+        return null;
+    }
+
+    private static FileSystem createHdfs(String hdfsRemoteUri, String hdfsUser) throws URISyntaxException, IOException, InterruptedException {
+        // 生成配置文件
+        Configuration conf = new Configuration();
+        // 生成hdfs对象
+        return FileSystem.get(
+                new URI(hdfsRemoteUri),
+                conf,
+                hdfsUser
+        );
     }
 }

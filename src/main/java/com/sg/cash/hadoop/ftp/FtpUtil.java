@@ -444,7 +444,7 @@ public class FtpUtil {
                         .toString();
                 // 获取文件夹下的所有文件
                 FTPFile[] ftpDirFiles = ftpClient.listFiles(dirPath);
-                System.out.println("文件夹[" + ftpDir.getName() + "]下文件总数:" + ftpDirFiles.length);
+                System.out.println("ftp文件夹[" + ftpPath + ftpDir.getName() + "]下文件总数:" + ftpDirFiles.length);
                 ftpFileNumber += ftpDirFiles.length;
                 for (FTPFile file : ftpDirFiles) {
                     // 生成新文件夹名称
@@ -486,19 +486,44 @@ public class FtpUtil {
      */
     public static final Pattern PATTERN = Pattern.compile("[0-9]{8}");
 
+    public static void checkZero(String ftpPath) {
+        FtpUtil ftpUtil = new FtpUtil();
+        try {
+            ftpUtil.connect();
+            FTPClient ftpClient = ftpUtil.getFtpClient();
+            // 统计是否存在容量为0的文件
+            System.out.println("容量为0文件总数:" + zero(ftpPath, ftpClient));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            ftpUtil.destroyFtpClient();
+        }
+    }
+
     public static void check(String ftpPath) {
         FtpUtil ftpUtil = new FtpUtil();
         try {
             ftpUtil.connect();
             FTPClient ftpClient = ftpUtil.getFtpClient();
+            System.out.println("autodetect utf8:" + ftpClient.getAutodetectUTF8());
+            System.out.println("charset:" + ftpClient.getCharset());
+            System.out.println("connection timeout:" + ftpClient.getConnectTimeout());
+            System.out.println("local address:" + ftpClient.getLocalAddress().toString());
+            System.out.println("local port:" + ftpClient.getLocalPort());
+            System.out.println("remote address:" + ftpClient.getRemoteAddress().toString());
+            System.out.println("remote port:" + ftpClient.getRemotePort());
+            System.out.println("status:" + ftpClient.getStatus());
+            System.out.println("system type:" + ftpClient.getSystemType());
+            System.out.println("tcp no delay:" + ftpClient.getTcpNoDelay());
+            System.out.println("changeToParentDirectory:" + ftpClient.changeToParentDirectory());
+            System.out.println("isAvailable:" + ftpClient.isAvailable());
+            System.out.println("isConnected:" + ftpClient.isConnected());
             // 统计文件夹总数
             int dirNumber = 0;
             FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
             System.out.println("文件夹总数:" + (dirNumber = dirs.length));
             // 统计文件总数
             System.out.println("文件总数:" + count(ftpPath, ftpClient));
-            // 统计是否存在容量为0的文件
-            System.out.println("容量为0文件总数:" + zero(ftpPath, ftpClient));
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {

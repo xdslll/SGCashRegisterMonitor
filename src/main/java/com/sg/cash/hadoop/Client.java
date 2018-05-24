@@ -6,6 +6,10 @@ import com.sg.cash.hadoop.hive.HiveUtil;
 import com.sg.cash.hadoop.sqlserver.SQLServerHandler;
 import com.sg.cash.hadoop.sqoop.SqoopUtil;
 import com.sg.cash.local.LocalLogFileHandler;
+import com.sg.cash.util.ConfigUtil;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author xiads
@@ -17,22 +21,23 @@ public class Client {
     /**
      * ftp目录
      */
-    public static final String FTP_PATH = "/logs/JKreport/";
+    public static final String FTP_PATH = ConfigUtil.get("ftp_path");
 
     /**
      * 本地文件路径(gbk)
      */
-    public static final String LOCAL_PATH = "/Users/apple/Desktop/test/";
+    public static final String LOCAL_PATH = ConfigUtil.get("local_path");
 
     /**
      * 本地文件路径(utf-8)
      */
-    public static final String LOCAL_PATH2 = "/Users/apple/Desktop/test2/";
+    public static final String LOCAL_PATH2 = ConfigUtil.get("local_path2");
 
     /**
      * hdfs远程uri
      */
-    public static final String HDFS_REMOTE_URI = "hdfs://www.mac-bigdata-01.com:8020";
+    public static final String HDFS_REMOTE_URI = ConfigUtil.get("hdfs_remote_uri");
+    public static final String HDFS_REMOTE_URI2 = ConfigUtil.get("hdfs_remote_uri2");
 
     /**
      * hdfs内部uri
@@ -42,17 +47,17 @@ public class Client {
     /**
      * hdfs用户名
      */
-    public static final String HDFS_USER = "hadoop";
+    public static final String HDFS_USER = ConfigUtil.get("hdfs_user");
 
     /**
      * hdfs上传根文件夹
      */
-    public static final String HDFS_REPORT_DIR = "/sg/report/";
+    public static final String HDFS_REPORT_DIR = ConfigUtil.get("hdfs_report_dir");
 
     /**
      * hdfs上传文件夹(实际存放文件路径)
      */
-    public static final String HDFS_REPORT_INPUT_DIR = "/sg/report/input/";
+    public static final String HDFS_REPORT_INPUT_DIR = ConfigUtil.get("hdfs_report_input_dir");
 
     /**
      * hive连接字符串
@@ -92,13 +97,13 @@ public class Client {
     /**
      * hive仓库地址
      */
-    public static final String HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/";
-    public static final String HIVE_WAREHOUSE2 = "/user/hive/warehouse/sg.db/tbl_sg_report_cash_detail/";
+    public static final String HIVE_WAREHOUSE = ConfigUtil.get("hive_warehouse");
+    // public static final String HIVE_WAREHOUSE2 = "/user/hive/warehouse/sg.db/tbl_sg_report_cash_detail/";
 
     /**
      * 门店相关的文件
      */
-    public static final String HDFS_UPLOAD_STORE_DIR = "/sg/report/store/";
+    public static final String HDFS_UPLOAD_STORE_DIR = ConfigUtil.get("hdfs_upload_store_dir");
     public static final String LOCAL_ORIGINAL_STORE_FILE_PATH = "/Users/apple/Desktop/store.csv";
     public static final String LOCAL_NEW_STORE_FILE_PATH = "/Users/apple/Desktop/store2.csv";
     public static final String LOCAL_FINAL_STORE_FILE_PATH = "/Users/apple/Desktop/store3.csv";
@@ -106,8 +111,8 @@ public class Client {
     /**
      * 收银机相关的文件
      */
-    public static final String HDFS_UPLOAD_MACHINE_DIR = "/sg/report/machine/";
-    public static final String LOCAL_CASH_MACHINE_FILE_PATH = "/Users/apple/Desktop/machine.csv";
+    public static final String HDFS_UPLOAD_MACHINE_DIR = ConfigUtil.get("hdfs_upload_machine_dir");
+    public static final String LOCAL_CASH_MACHINE_FILE_PATH = ConfigUtil.get("local_cash_machine_file_path");
 
     /**
      * MySQL相关参数
@@ -123,33 +128,122 @@ public class Client {
     public static final String SQOOP_HIVE_WAREHOUSE = "/user/hive/warehouse/sg2.db/result_avg_cash_time";
 
     public static void main(String[] args) {
-        if (args.length < 2) {
-            throw new RuntimeException("参数为空");
+        if (args.length < 1) {
+            showHelp();
+            throw new RuntimeException("参数不能为空");
         }
         long _START = System.currentTimeMillis();
-        String type = args[0];
-        String cmd = args[1];
+        String type = args.length >=1 ? args[0] : "";
+        String cmd = args.length >= 2 ? args[1] : "";
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println("Current time:" + df.format(new Date()));
+        System.out.println("Your command is: " + type + " " + cmd);
         if (type.equals("ftp")) {
             if (cmd.equals("check")) {
                 ftpCheck();
+            } else if (cmd.equals("sync")) {
+                ftpSync();
+            } else if ((cmd.equals("check-zero"))) {
+                ftpCheckZero();
             }
+        } else if (type.equals("local")) {
+            if (cmd.equals("check")) {
+                localCheck();
+            } else if (cmd.equals("convert")) {
+                localConvert();
+            }
+        } else if (type.equals("hdfs")) {
+            if (cmd.equals("check")) {
+                hdfsCheck();
+            } else if (cmd.equals("upload")) {
+                hdfsUpload();
+            }
+        } else if (type.equals("help")) {
+            showHelp();
+        } else {
+            System.out.println("Command cannot be recognized!");
+            showHelp();
         }
-        //sync();
-        //check();
         long _END = System.currentTimeMillis();
         System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
     }
 
+    private static void showHelp() {
+        System.out.println("You can use following command...");
+        System.out.println("- ftp");
+        System.out.println("    > check");
+        System.out.println("    > check-zero");
+        System.out.println("    > sync");
+        System.out.println("- local");
+        System.out.println("    > check");
+        System.out.println("    > convert");
+        System.out.println("- hdfs");
+        System.out.println("    > check");
+        System.out.println("    > upload");
+    }
+
+    private static void hdfsCheck() {
+        String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
+        System.out.println("当前激活的hdfs链接为:" + activeHdfsRemoteUri);
+        HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HDFS_REPORT_INPUT_DIR);
+        HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
+        HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_STORE_DIR);
+        HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR);
+    }
+
+    private static void hdfsUpload() {
+        String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
+        System.out.println("当前激活的hdfs链接为:" + activeHdfsRemoteUri);
+        if (!HdfsUtil.uploadFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_REPORT_DIR, LOCAL_PATH2, HIVE_WAREHOUSE)) {
+            System.out.println("上传日志文件到hdfs出错!");
+        }
+
+        if (!HdfsUtil.uploadStoreFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_STORE_DIR,
+                LOCAL_ORIGINAL_STORE_FILE_PATH, LOCAL_NEW_STORE_FILE_PATH, LOCAL_FINAL_STORE_FILE_PATH)) {
+            System.out.println("上传门店文件到hdfs出错!");
+        }
+
+        if (!HdfsUtil.uploadMachineFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR,
+                LOCAL_CASH_MACHINE_FILE_PATH)) {
+            System.out.println("上传门店文件到hdfs出错!");
+        }
+    }
+
+    private static void localCheck() {
+        LocalLogFileHandler.check(LOCAL_PATH);
+        LocalLogFileHandler.check(LOCAL_PATH2);
+    }
+
+    private static void localConvert() {
+        if (!LocalLogFileHandler.convert(LOCAL_PATH, LOCAL_PATH2, false)) {
+            System.out.println("本地数据转码出错!");
+        } else {
+            System.out.println("本地数据转码成功!");
+        }
+    }
+
     public static void ftpCheck() {
-        FtpUtil.check(FTP_PATH);
+        FtpUtil.check(ConfigUtil.get("ftp_path"));
+    }
+
+    private static void ftpCheckZero() {
+        FtpUtil.checkZero(ConfigUtil.get("ftp_path"));
+    }
+
+    public static void ftpSync() {
+        if (!FtpUtil.sync(FTP_PATH, LOCAL_PATH)) {
+            System.out.println("ftp数据同步出错!");
+        } else {
+            System.out.println("ftp数据同步成功!");
+        }
     }
 
     public static void check() {
         //FtpUtil.check(FTP_PATH);
         //LocalLogFileHandler.check(LOCAL_PATH);
         //LocalLogFileHandler.check(LOCAL_PATH2);
-        HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HDFS_REPORT_INPUT_DIR);
-        HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE);
+        //HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HDFS_REPORT_INPUT_DIR);
+        //HdfsUtil.check(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE);
         // 测试代码
         //HdfsUtil.compareDirectories(HDFS_REMOTE_URI, HDFS_USER, HIVE_WAREHOUSE, HIVE_WAREHOUSE2);
         //HdfsUtil.download(HDFS_REMOTE_URI, HDFS_USER, "hdfs://www.mac-bigdata-01.com:8020/user/hive/warehouse/sg2.db/tbl_sg_report_cash_detail/0319_0012_20180306.log", "/Users/apple/Desktop/0319_0012_20180306_1.log");
