@@ -530,11 +530,9 @@ public class FtpUtil {
             // System.out.println(ftpClient.listFiles(ftpPath).length);
             // System.out.println(ftpClient.listNames(ftpPath).length);
             // 统计文件夹总数
-            ftpClient.enterLocalPassiveMode();
-            FTPFile[] dirs = ftpClient.listDirectories(ftpPath);
-            System.out.println("文件夹总数:" + dirs.length);
+            System.out.println("文件夹总数:" + countDir(ftpPath, ftpClient));
             // 统计文件总数
-            System.out.println("文件总数:" + count(ftpPath, ftpClient));
+            System.out.println("文件总数:" + countFile(ftpPath, ftpClient));
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
@@ -564,14 +562,35 @@ public class FtpUtil {
         return count;
     }
 
-    public static int count(String ftpPath, FTPClient ftpClient) throws IOException {
+    public static int countDir(String ftpPath, FTPClient ftpClient) throws IOException {
+        ftpClient.enterLocalPassiveMode();
+        FTPFile[] ftpDirs = ftpClient.listDirectories(ftpPath);
+        if (ftpDirs != null) {
+            return ftpDirs.length;
+        } else {
+            return 0;
+        }
+    }
+
+    public static int countFile(String ftpPath, FTPClient ftpClient) throws IOException {
         int count = 0;
+        ftpClient.enterLocalPassiveMode();
+        FTPFile[] ftpFiles = ftpClient.listFiles(ftpPath);
+        for (FTPFile ftpFile : ftpFiles) {
+            if (ftpFile.isDirectory()) {
+                count += countFile(ftpPath + ftpFile.getName(), ftpClient);
+            } else if (ftpFile.isFile()) {
+                count++;
+            }
+        }
+        return count;
+        /*int count = 0;
         ftpClient.enterLocalPassiveMode();
         String[] ftpFileNames = ftpClient.listNames(ftpPath);
         if (ftpFileNames == null || ftpFileNames.length == 0) {
             return count;
         }
-        for (String ftpFilePath : ftpFileNames) {
+        for (String ftpFilePath : ftpFileNames) {{
             //System.out.println("正在比对文件[" + ftpFilePath + "]");
             if (ftpFilePath.toLowerCase().endsWith(".log")) {
                 count++;
@@ -579,7 +598,14 @@ public class FtpUtil {
                 count += count(ftpFilePath, ftpClient);
             }
         }
-        return count;
+            //System.out.println("正在比对文件[" + ftpFilePath + "]");
+            if (ftpFilePath.toLowerCase().endsWith(".log")) {
+                count++;
+            } else {
+                count += count(ftpFilePath, ftpClient);
+            }
+        }
+        return count;*/
     }
 
     public static void diff(String ftpPath, String localPath) {
@@ -601,7 +627,7 @@ public class FtpUtil {
                 boolean hasFile = false;
                 if (localFiles != null) {
                     for (String localFile : localFiles) {
-                        if (ftpFiles[i].equals(localFile)) {
+                        if (ftpFiles[i].toLowerCase().equals(localFile.toLowerCase())) {
                             hasFile = true;
                             break;
                         }
@@ -620,7 +646,7 @@ public class FtpUtil {
                 boolean hasFile = false;
                 if (ftpFileNames != null) {
                     for (String ftpFile : ftpFileNames) {
-                        if (localFiles[i].equals(ftpFile)) {
+                        if (localFiles[i].toLowerCase().equals(ftpFile.toLowerCase())) {
                             hasFile = true;
                             break;
                         }
