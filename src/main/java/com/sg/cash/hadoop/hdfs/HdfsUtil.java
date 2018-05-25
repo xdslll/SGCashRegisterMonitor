@@ -689,7 +689,7 @@ public class HdfsUtil {
                 }
             } catch(Exception ex) {
                 // ex.printStackTrace();
-                System.out.println(ex.getMessage());
+                System.out.println(hdfsRemoteUri + " 处于standby状态");
             }
             try {
                 if (hdfs2.exists(p)) {
@@ -697,10 +697,11 @@ public class HdfsUtil {
                 }
             } catch(Exception ex) {
                 // ex.printStackTrace();
-                System.out.println(ex.getMessage());
+                System.out.println(hdfsRemoteUri2 + " 处于standby状态");
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
+            System.out.println(ex.getMessage());
         } finally {
             close(hdfs);
             close(hdfs2);
