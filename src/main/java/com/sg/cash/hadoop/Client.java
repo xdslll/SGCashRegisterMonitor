@@ -182,6 +182,8 @@ public class Client {
                 ftpSync();
             } else if ((cmd.equals("check-zero"))) {
                 ftpCheckZero();
+            } else if ((cmd.equals("diff"))) {
+                ftpDiff();
             }
         } else if (type.equals("local")) {
             if (cmd.equals("check")) {
@@ -226,6 +228,7 @@ public class Client {
                 "   check      show ftp status\n" +
                 "   check-zero show number of zero files\n" +
                 "   sync       sync data from ftp\n" +
+                "   diff       show differences between ftp and local\n" +
                 "\n" +
                 "local   sync data from ftp to localhost\n" +
                 "   check      check status of local files\n" +
@@ -340,6 +343,10 @@ public class Client {
         } else {
             System.out.println("本地数据转码成功!");
         }
+    }
+
+    private static void ftpDiff() {
+        FtpUtil.diff(FTP_PATH, LOCAL_PATH);
     }
 
     public static void ftpCheck() {

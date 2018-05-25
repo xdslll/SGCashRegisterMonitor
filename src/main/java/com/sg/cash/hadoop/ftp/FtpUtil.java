@@ -6,6 +6,8 @@ import org.apache.commons.net.ftp.*;
 
 import java.io.*;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -578,5 +580,60 @@ public class FtpUtil {
             }
         }
         return count;
+    }
+
+    public static void diff(String ftpPath, String localPath) {
+        FtpUtil ftpUtil = new FtpUtil();
+        try {
+            ftpUtil.connect();
+            FTPClient ftpClient = ftpUtil.getFtpClient();
+            diff(ftpPath, localPath, ftpClient);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            ftpUtil.destroyFtpClient();
+        }
+    }
+
+    public static void compare(String[] originalFiles, String[] newFiles, String tag1, String tag2) {
+        for (String originalFile : originalFiles) {
+            boolean hasFile = false;
+            for (String newFile : newFiles) {
+                if (originalFile.equals(newFile)) {
+                    hasFile = true;
+                    break;
+                }
+            }
+            if (!hasFile) {
+                System.out.println("[" + originalFile + "] " + tag1 + ": have, " + tag2 + ": not have");
+            }
+        }
+    }
+
+    public static void diff(String ftpPath, String localPath, FTPClient ftpClient) throws IOException {
+        ftpClient.enterLocalPassiveMode();
+        String[] originalFtpFileNames = ftpClient.listNames(ftpPath);
+        String[] ftpFileNames = new String[originalFtpFileNames.length];
+        for (int i = 0; i < ftpFileNames.length; i++) {
+            int index = originalFtpFileNames[i].lastIndexOf("/");
+            ftpFileNames[i] = originalFtpFileNames[i].substring(index + 1);
+        }
+        String[] localFiles = new File(localPath).list();
+        compare(ftpFileNames, localFiles, "ftp", "local");
+        compare(localFiles, ftpFileNames, "local", "ftp");
+
+        for (String originalFtpDir : originalFtpFileNames) {
+            ftpClient.enterLocalPassiveMode();
+            String dirName = originalFtpDir.substring(originalFtpDir.lastIndexOf("/") + 1);
+            String[] originalSubFtpFileNames = ftpClient.listNames(originalFtpDir);
+            String[] ftpSubFileNames = new String[originalSubFtpFileNames.length];
+            for (int i = 0; i < ftpSubFileNames.length; i++) {
+                int index = originalSubFtpFileNames[i].lastIndexOf("/");
+                ftpSubFileNames[i] = originalSubFtpFileNames[i].substring(index + 1);
+            }
+            String[] localSubFileNames = new File(localPath + dirName).list();
+            compare(ftpSubFileNames, localSubFileNames, "ftp", "local");
+            compare(localSubFileNames, ftpSubFileNames, "local", "ftp");
+        }
     }
 }
