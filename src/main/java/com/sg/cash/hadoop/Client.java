@@ -188,6 +188,8 @@ public class Client {
         } else if (type.equals("local")) {
             if (cmd.equals("check")) {
                 localCheck();
+            } else if (cmd.equals("clear")) {
+                localClear();
             } else if (cmd.equals("convert")) {
                 localConvert();
             }
@@ -232,6 +234,7 @@ public class Client {
                 "\n" +
                 "local   sync data from ftp to localhost\n" +
                 "   check      check status of local files\n" +
+                "   clear      clear duplicated file in local\n" +
                 "   convert    convert file encoding from gbk to utf-8\n" +
                 "\n" +
                 "hdfs    upload data to hadoop platform\n" +
@@ -330,6 +333,11 @@ public class Client {
                 LOCAL_CASH_MACHINE_FILE_PATH)) {
             System.out.println("上传门店文件到hdfs出错!");
         }
+    }
+
+    private static void localClear() {
+        LocalLogFileHandler.clearDuplicated(LOCAL_PATH);
+        LocalLogFileHandler.clearDuplicated(LOCAL_PATH2);
     }
 
     private static void localCheck() {

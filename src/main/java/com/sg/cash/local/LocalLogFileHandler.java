@@ -317,4 +317,40 @@ public class LocalLogFileHandler {
         }
         return count;
     }
+
+    /**
+     * 清除本地重复的文件
+     *
+     * @param localPath
+     */
+    public static void clearDuplicated(String localPath) {
+        File dir = new File(localPath);
+        if (dir.isDirectory()) {
+            File[] files = new File(localPath).listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        for (File file2 : files) {
+                            if (file2.isFile()) {
+                                if (!file.getName().equals(file2.getName()) &&
+                                        file.getName().toLowerCase().equals(file2.getName().toLowerCase())) {
+                                    System.out.println("发现重复文件:" + file.getAbsolutePath() + "," + file2.getAbsolutePath());
+                                    System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
+                                    if (file.lastModified() > file2.lastModified()) {
+                                        System.out.println("应删除file2");
+                                        //file2.delete();
+                                    } else {
+                                        System.out.println("应删除file");
+                                        //file.delete();
+                                    }
+                                }
+                            }
+                        }
+                    } else if (file.isDirectory()) {
+                        clearDuplicated(file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+    }
 }
