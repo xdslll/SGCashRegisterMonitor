@@ -3,6 +3,7 @@ package com.sg.cash.hadoop.hive;
 import com.sg.cash.hadoop.Client;
 import com.sg.cash.util.BaseDbRunnable;
 import com.sg.cash.util.DBUtil;
+import com.sg.cash.util.HdfsUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -139,6 +140,7 @@ public class HiveUtil {
         String hdfsRootMachinePath = Client.HDFS_UPLOAD_MACHINE_DIR;
         // hdfs远程uri
         String hdfsRemoteUri = Client.HDFS_REMOTE_URI;
+        String hdfsRemoteUri2 = Client.HDFS_REMOTE_URI2;
         // hdfs内部uri
         String hdfsInternalUri = Client.HDFS_INTERNAL_URI;
         // hdfs登录用户
@@ -212,11 +214,12 @@ public class HiveUtil {
 
             System.out.println(hiveClient.showTables(stmt));
 
+            String activeHdfsRemoteUri = com.sg.cash.hadoop.hdfs.HdfsUtil.checkActiveHdfs(hdfsRemoteUri, hdfsRemoteUri2, user);
             // 生成配置文件
             Configuration conf = new Configuration();
             // 生成hdfs对象
             hdfs = FileSystem.get(
-                    new URI(hdfsRemoteUri),
+                    new URI(activeHdfsRemoteUri),
                     conf,
                     user
             );
