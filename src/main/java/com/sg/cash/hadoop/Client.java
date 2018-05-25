@@ -279,8 +279,10 @@ public class Client {
     private static void hiveCheck() {
         Connection conn = null;
         try {
+            System.out.println("正在连接hive...");
             HiveUtil hiveUtil = new HiveUtil(HIVE_URL, HIVE_USER, HIVE_PASSWORD);
             conn = hiveUtil.connect();
+            System.out.println("hive连接成功!");
             hiveUtil.checkDb(conn, HIVE_DB);
             hiveUtil.checkTable(conn, HIVE_DB, HIVE_TABLE_LOG);
             hiveUtil.checkTable(conn, HIVE_DB, HIVE_TABLE_STORE);
