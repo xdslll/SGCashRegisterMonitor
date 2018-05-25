@@ -595,20 +595,39 @@ public class FtpUtil {
         }
     }
 
-    public static void compare(String[] originalFiles, String[] newFiles, String tag1, String tag2) {
-        if (originalFiles != null) {
-            for (String originalFile : originalFiles) {
+    public static void compareFtpToLocal(String[] originalFtpFiles, String[] ftpFiles, String[] localFiles) {
+        if (ftpFiles != null) {
+            for (int i = 0; i < originalFtpFiles.length; i++) {
                 boolean hasFile = false;
-                if (newFiles != null) {
-                    for (String newFile : newFiles) {
-                        if (originalFile.equals(newFile)) {
+                if (localFiles != null) {
+                    for (String localFile : localFiles) {
+                        if (ftpFiles[i].equals(localFile)) {
                             hasFile = true;
                             break;
                         }
                     }
                 }
                 if (!hasFile) {
-                    System.out.println("[" + originalFile + "] " + tag1 + ": have, " + tag2 + ": not have");
+                    System.out.println("[" + originalFtpFiles[i] + "] ftp: have, local: not have");
+                }
+            }
+        }
+    }
+
+    public static void compareLocalToFtp(String[] ftpFileNames, String localPath, String[] localFiles) {
+        if (localFiles != null) {
+            for (int i = 0; i < localFiles.length; i++) {
+                boolean hasFile = false;
+                if (ftpFileNames != null) {
+                    for (String ftpFile : ftpFileNames) {
+                        if (localFiles[i].equals(ftpFile)) {
+                            hasFile = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasFile) {
+                    System.out.println("[" + localPath + localFiles[i] + "] local: have, ftp: not have");
                 }
             }
         }
@@ -623,8 +642,8 @@ public class FtpUtil {
             ftpFileNames[i] = originalFtpFileNames[i].substring(index + 1);
         }
         String[] localFiles = new File(localPath).list();
-        compare(ftpFileNames, localFiles, "ftp", "local");
-        compare(localFiles, ftpFileNames, "local", "ftp");
+        compareFtpToLocal(originalFtpFileNames, ftpFileNames, localFiles);
+        compareLocalToFtp(ftpFileNames, localPath, localFiles);
 
         for (String originalFtpDir : originalFtpFileNames) {
             ftpClient.enterLocalPassiveMode();
@@ -636,8 +655,8 @@ public class FtpUtil {
                 ftpSubFileNames[i] = originalSubFtpFileNames[i].substring(index + 1);
             }
             String[] localSubFileNames = new File(localPath + dirName).list();
-            compare(ftpSubFileNames, localSubFileNames, "ftp", "local");
-            compare(localSubFileNames, ftpSubFileNames, "local", "ftp");
+            compareFtpToLocal(originalSubFtpFileNames, ftpSubFileNames, localSubFileNames);
+            compareLocalToFtp(ftpSubFileNames, localPath, localSubFileNames);
         }
     }
 }
