@@ -646,7 +646,7 @@ public class FtpUtil {
                 boolean hasFile = false;
                 if (ftpFileNames != null) {
                     for (String ftpFile : ftpFileNames) {
-                        if (localFiles[i].toLowerCase().equals(ftpFile.toLowerCase())) {
+                        if (localFiles[i].equals(ftpFile)) {
                             hasFile = true;
                             break;
                         }
