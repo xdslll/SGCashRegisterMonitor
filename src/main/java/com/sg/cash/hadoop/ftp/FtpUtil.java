@@ -668,7 +668,9 @@ public class FtpUtil {
             ftpFileNames[i] = originalFtpFileNames[i].substring(index + 1);
         }
         String[] localFiles = new File(localPath).list();
+        System.out.println("正在扫描 ftp[" + ftpPath + "] > local[" + localPath + "]");
         compareFtpToLocal(originalFtpFileNames, ftpFileNames, localFiles);
+        System.out.println("正在扫描 local[" + localPath + "] > ftp[" + ftpPath + "]");
         compareLocalToFtp(ftpFileNames, localPath, localFiles);
 
         for (String originalFtpDir : originalFtpFileNames) {
@@ -681,7 +683,9 @@ public class FtpUtil {
                 ftpSubFileNames[i] = originalSubFtpFileNames[i].substring(index + 1);
             }
             String[] localSubFileNames = new File(localPath + dirName).list();
+            System.out.println("正在扫描 ftp[" + ftpPath + dirName + "] > local[" + localPath + dirName + "]");
             compareFtpToLocal(originalSubFtpFileNames, ftpSubFileNames, localSubFileNames);
+            System.out.println("正在扫描 local[" + localPath + dirName + "] > ftp[" + ftpPath + dirName + "]");
             compareLocalToFtp(ftpSubFileNames, localPath, localSubFileNames);
         }
     }
