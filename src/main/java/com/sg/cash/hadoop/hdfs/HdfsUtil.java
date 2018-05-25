@@ -635,6 +635,7 @@ public class HdfsUtil {
             );
             Path p = new Path(hdfsDir);
             if (!hdfs.exists(p)) {
+                System.out.println("文件夹[" + p.toString() + "]不存在");
                 return;
             }
             System.out.println("文件夹[" + p.toString() + "]下文件夹数量:" + count(hdfs, p, "dir"));
@@ -718,5 +719,48 @@ public class HdfsUtil {
                 conf,
                 hdfsUser
         );
+    }
+
+    public static void clearDuplicated(String hdfsRemoteUri, String hdfsUser, String hdfsDir) {
+        FileSystem hdfs = null;
+        try {
+            hdfs = createHdfs(hdfsRemoteUri, hdfsUser);
+            Path p = new Path(hdfsDir);
+            if (!hdfs.exists(p)) {
+                return;
+            }
+            FileStatus[] dirs = hdfs.listStatus(p);
+            for (FileStatus dir : dirs) {
+                if (dir.isDirectory()) {
+                    System.out.println("正在扫描文件夹[" + dir.getPath() + "]");
+                    FileStatus[] files = hdfs.listStatus(dir.getPath());
+                    for (FileStatus file : files) {
+                        if (file.isFile()) {
+                            for (FileStatus file2: files) {
+                                Path p1 = file.getPath();
+                                Path p2 = file2.getPath();
+                                System.out.println(p1 + "," + p2);
+                                /*if (!file.getPath().equals(file2.getName()) &&
+                                        file.getName().toLowerCase().equals(file2.getName().toLowerCase())) {
+                                    System.out.println("发现重复文件:" + file.getAbsolutePath() + "," + file2.getAbsolutePath());
+                                    System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
+                                    if (file.lastModified() > file2.lastModified()) {
+                                        System.out.println("应删除[" + file2 + "]");
+                                        //file2.delete();
+                                    } else {
+                                        System.out.println("应删除[" + file + "]");
+                                        //file.delete();
+                                    }
+                                }*/
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(hdfs);
+        }
     }
 }

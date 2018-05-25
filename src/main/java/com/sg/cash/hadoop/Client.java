@@ -196,6 +196,8 @@ public class Client {
         } else if (type.equals("hdfs")) {
             if (cmd.equals("check")) {
                 hdfsCheck();
+            } else if (cmd.equals("clear")) {
+                hdfsClear();
             } else if (cmd.equals("upload")) {
                 hdfsUpload();
             }
@@ -239,6 +241,7 @@ public class Client {
                 "\n" +
                 "hdfs    upload data to hadoop platform\n" +
                 "   check      show hdfs status\n" +
+                "   clear      clear duplicated file in hdfs\n" +
                 "   upload     upload files to hdfs\n" +
                 "\n" +
                 "hive    upload data to hive warehouse\n" +
@@ -315,6 +318,13 @@ public class Client {
         HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
         HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_STORE_DIR);
         HdfsUtil.check(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR);
+    }
+
+    private static void hdfsClear() {
+        String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
+        System.out.println("当前激活的hdfs链接为:" + activeHdfsRemoteUri);
+        HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HDFS_REPORT_INPUT_DIR);
+        //HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
     }
 
     private static void hdfsUpload() {
