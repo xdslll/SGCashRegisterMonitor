@@ -596,16 +596,20 @@ public class FtpUtil {
     }
 
     public static void compare(String[] originalFiles, String[] newFiles, String tag1, String tag2) {
-        for (String originalFile : originalFiles) {
-            boolean hasFile = false;
-            for (String newFile : newFiles) {
-                if (originalFile.equals(newFile)) {
-                    hasFile = true;
-                    break;
+        if (originalFiles != null) {
+            for (String originalFile : originalFiles) {
+                boolean hasFile = false;
+                if (newFiles != null) {
+                    for (String newFile : newFiles) {
+                        if (originalFile.equals(newFile)) {
+                            hasFile = true;
+                            break;
+                        }
+                    }
                 }
-            }
-            if (!hasFile) {
-                System.out.println("[" + originalFile + "] " + tag1 + ": have, " + tag2 + ": not have");
+                if (!hasFile) {
+                    System.out.println("[" + originalFile + "] " + tag1 + ": have, " + tag2 + ": not have");
+                }
             }
         }
     }
