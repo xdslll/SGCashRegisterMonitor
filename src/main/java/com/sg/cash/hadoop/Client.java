@@ -327,8 +327,10 @@ public class Client {
     private static void hdfsClear() {
         String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
         System.out.println("当前激活的hdfs链接为:" + activeHdfsRemoteUri);
+        System.out.println("开始清理[" + HDFS_REPORT_INPUT_DIR + "]...");
         HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HDFS_REPORT_INPUT_DIR);
-        HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
+        System.out.println("开始清理[" + HIVE_WAREHOUSE + "]...");
+        HdfsUtil.clearDuplicatedFiles(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
     }
 
     private static void hdfsUpload() {
