@@ -748,13 +748,17 @@ public class HdfsUtil {
                                 if (!fileName1.equals(fileName2) &&
                                         fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
                                     System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
-                                    System.out.println(file.getModificationTime() + "," + file2.getModificationTime());
+                                    System.out.println("最后更新时间:" + file.getModificationTime() + "," + file2.getModificationTime());
                                     if (file.getModificationTime() > file2.getModificationTime()) {
                                         //System.out.println("应删除[" + p2.getName() + "]");
-                                        deleteFiles.add(p2);
+                                        if (!deleteFiles.contains(p2)) {
+                                            deleteFiles.add(p2);
+                                        }
                                     } else {
                                         //System.out.println("应删除[" + p1.getName() + "]");
-                                        deleteFiles.add(p1);
+                                        if (!deleteFiles.contains(p1)) {
+                                            deleteFiles.add(p1);
+                                        }
                                     }
                                 }
                             }

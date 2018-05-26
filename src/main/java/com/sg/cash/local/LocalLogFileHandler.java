@@ -340,13 +340,17 @@ public class LocalLogFileHandler {
                                     if (!file.getName().equals(file2.getName()) &&
                                             file.getName().toLowerCase().equals(file2.getName().toLowerCase())) {
                                         System.out.println("发现重复文件:" + file.getAbsolutePath() + "," + file2.getAbsolutePath());
-                                        // System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
+                                        System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
                                         if (file.lastModified() > file2.lastModified()) {
                                             // System.out.println("应删除[" + file2 + "]");
-                                            deleteFiles.add(file2);
+                                            if (!deleteFiles.contains(file2)) {
+                                                deleteFiles.add(file2);
+                                            }
                                         } else {
                                             // System.out.println("应删除[" + file + "]");
-                                            deleteFiles.add(file);
+                                            if (!deleteFiles.contains(file)) {
+                                                deleteFiles.add(file);
+                                            }
                                         }
                                     }
                                 }

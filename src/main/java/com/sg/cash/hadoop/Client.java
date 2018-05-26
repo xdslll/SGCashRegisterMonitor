@@ -215,6 +215,9 @@ public class Client {
             }
         } else if (type.equals("config")) {
             ConfigUtil.showAllConfig();
+        } else if (type.equals("clear")) {
+            localClear();
+            hdfsClear();
         } else if (type.equals("help")) {
             showHelp();
         } else {
@@ -252,6 +255,7 @@ public class Client {
                 "   check      show hupu databases\n" +
                 "   sync       sync data from hupu databases\n" +
                 "\n" +
+                "clear   clear duplicated file in local and hdfs\n" +
                 "config  show all config\n" +
                 "\n" +
                 "command 'enford help' may show something helpful for you.\n" +
