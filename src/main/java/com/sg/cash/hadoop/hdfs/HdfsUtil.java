@@ -744,7 +744,6 @@ public class HdfsUtil {
                                 Path p2 = file2.getPath();
                                 String fileName1 = getFileName(p1);
                                 String fileName2 = getFileName(p2);
-                                //System.out.println(fileName1 + "," + fileName2);
                                 if (!fileName1.equals(fileName2) &&
                                         fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
                                     System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
@@ -769,11 +768,11 @@ public class HdfsUtil {
             for (Path deleteFile : deleteFiles) {
                 if (hdfs.exists(deleteFile)) {
                     System.out.println("正在删除文件[" + deleteFile.getName() + "]...");
-                    /*if (hdfs.delete(deleteFile, true)) {
+                    if (hdfs.delete(deleteFile, true)) {
                         System.out.println("删除文件[" + deleteFile.getName() + "]成功");
                     } else {
                         System.out.println("删除文件[" + deleteFile.getName() + "]失败");
-                    }*/
+                    }
                 } else {
                     System.out.println("文件[" + deleteFile + "]不存在");
                 }

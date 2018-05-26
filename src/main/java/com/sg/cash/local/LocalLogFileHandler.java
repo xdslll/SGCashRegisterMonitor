@@ -363,11 +363,11 @@ public class LocalLogFileHandler {
         for (File deleteFile : deleteFiles) {
             if (deleteFile.exists()) {
                 System.out.println("正在删除文件[" + deleteFile.getAbsolutePath() + "]...");
-                /*if (deleteFile.delete()) {
+                if (deleteFile.delete()) {
                     System.out.println("删除文件[" + deleteFile.getAbsolutePath() + "]成功");
                 } else {
                     System.out.println("删除文件[" + deleteFile.getAbsolutePath() + "]失败");
-                }*/
+                }
             } else {
                 System.out.println("文件[" + deleteFile.getAbsolutePath() + "]不存在");
             }
