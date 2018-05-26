@@ -116,7 +116,7 @@ public class MySQLHandler {
                 .append(data.getGroupName())
                 .append("',")
                 .append(data.getMachineId())
-                .append(",'")
+                .append(",'','")
                 .append(data.getMachineName())
                 .append("','")
                 .append(data.getDateStr())
