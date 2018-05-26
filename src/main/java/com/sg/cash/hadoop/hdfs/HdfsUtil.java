@@ -3,15 +3,16 @@ package com.sg.cash.hadoop.hdfs;
 import com.sg.cash.util.FileUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.hadoop.io.IOUtils;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -800,14 +801,24 @@ public class HdfsUtil {
                 return;
             }
             FileStatus[] files = hdfs.listStatus(p);
-            for (FileStatus file1 : files) {
-                if (file1.isFile()) {
-                    for (FileStatus file2 : files) {
-                        if (file2.isFile() || file1 != file2) {
+            ArrayList<FileStatus> fileList = new ArrayList<>();
+            for (FileStatus f : files) {
+                fileList.add(f);
+            }
+            System.out.println("files.length=" + files.length + ",fileList.size()=" + fileList.size());
+            Iterator<FileStatus> it = fileList.iterator();
+            while (it.hasNext()) {
+                FileStatus file1 = it.next();
+                if (!file1.isFile()) {
+                    it.remove();
+                } else {
+                    for (FileStatus file2 : fileList) {
+                        if (file2.isFile()) {
                             Path p1 = file1.getPath();
                             Path p2 = file2.getPath();
                             String fileName1 = getFileName(p1);
                             String fileName2 = getFileName(p2);
+                            System.out.println("正在比对文件[" + p1.getName() + "]>文件[" + p2.getName() + "]");
                             if (!fileName1.equals(fileName2) &&
                                     fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
                                 System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
@@ -826,6 +837,7 @@ public class HdfsUtil {
                             }
                         }
                     }
+                    it.remove();
                 }
             }
             for (Path deleteFile : deleteFiles) {
