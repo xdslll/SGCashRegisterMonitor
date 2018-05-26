@@ -11,6 +11,8 @@ import org.apache.hadoop.io.IOUtils;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xiads
@@ -723,6 +725,7 @@ public class HdfsUtil {
 
     public static void clearDuplicated(String hdfsRemoteUri, String hdfsUser, String hdfsDir) {
         FileSystem hdfs = null;
+        List<Path> deleteFiles = new ArrayList<>();
         try {
             hdfs = createHdfs(hdfsRemoteUri, hdfsUser);
             Path p = new Path(hdfsDir);
@@ -739,22 +742,36 @@ public class HdfsUtil {
                             for (FileStatus file2: files) {
                                 Path p1 = file.getPath();
                                 Path p2 = file2.getPath();
-                                System.out.println(p1 + "," + p2);
-                                /*if (!file.getPath().equals(file2.getName()) &&
-                                        file.getName().toLowerCase().equals(file2.getName().toLowerCase())) {
-                                    System.out.println("发现重复文件:" + file.getAbsolutePath() + "," + file2.getAbsolutePath());
-                                    System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
-                                    if (file.lastModified() > file2.lastModified()) {
-                                        System.out.println("应删除[" + file2 + "]");
-                                        //file2.delete();
+                                String fileName1 = getFileName(p1);
+                                String fileName2 = getFileName(p2);
+                                //System.out.println(fileName1 + "," + fileName2);
+                                if (!fileName1.equals(fileName2) &&
+                                        fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
+                                    System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
+                                    System.out.println(file.getModificationTime() + "," + file2.getModificationTime());
+                                    if (file.getModificationTime() > file2.getModificationTime()) {
+                                        //System.out.println("应删除[" + p2.getName() + "]");
+                                        deleteFiles.add(p2);
                                     } else {
-                                        System.out.println("应删除[" + file + "]");
-                                        //file.delete();
+                                        //System.out.println("应删除[" + p1.getName() + "]");
+                                        deleteFiles.add(p1);
                                     }
-                                }*/
+                                }
                             }
                         }
                     }
+                }
+            }
+            for (Path deleteFile : deleteFiles) {
+                if (hdfs.exists(deleteFile)) {
+                    System.out.println("正在删除文件[" + deleteFile.getName() + "]...");
+                    /*if (hdfs.delete(deleteFile, true)) {
+                        System.out.println("删除文件[" + deleteFile.getName() + "]成功");
+                    } else {
+                        System.out.println("删除文件[" + deleteFile.getName() + "]失败");
+                    }*/
+                } else {
+                    System.out.println("文件[" + deleteFile + "]不存在");
                 }
             }
         } catch (Exception ex) {
@@ -762,5 +779,11 @@ public class HdfsUtil {
         } finally {
             close(hdfs);
         }
+    }
+
+    private static String getFileName(Path p) {
+        String path = p.getName();
+        int index = path.lastIndexOf("/");
+        return path.substring(index + 1);
     }
 }

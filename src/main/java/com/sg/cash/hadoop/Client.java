@@ -324,7 +324,7 @@ public class Client {
         String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
         System.out.println("当前激活的hdfs链接为:" + activeHdfsRemoteUri);
         HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HDFS_REPORT_INPUT_DIR);
-        //HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
+        HdfsUtil.clearDuplicated(activeHdfsRemoteUri, HDFS_USER, HIVE_WAREHOUSE);
     }
 
     private static void hdfsUpload() {

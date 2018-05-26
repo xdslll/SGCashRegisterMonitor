@@ -7,6 +7,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -324,6 +326,7 @@ public class LocalLogFileHandler {
      * @param localPath
      */
     public static void clearDuplicated(String localPath) {
+        List<File> deleteFiles = new ArrayList<>();
         File[] dirs = new File(localPath).listFiles();
         if (dirs != null) {
             for (File dir : dirs) {
@@ -337,13 +340,13 @@ public class LocalLogFileHandler {
                                     if (!file.getName().equals(file2.getName()) &&
                                             file.getName().toLowerCase().equals(file2.getName().toLowerCase())) {
                                         System.out.println("发现重复文件:" + file.getAbsolutePath() + "," + file2.getAbsolutePath());
-                                        System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
+                                        // System.out.println("最后更新时间:" + file.lastModified() + "," + file2.lastModified());
                                         if (file.lastModified() > file2.lastModified()) {
-                                            System.out.println("应删除[" + file2 + "]");
-                                            //file2.delete();
+                                            // System.out.println("应删除[" + file2 + "]");
+                                            deleteFiles.add(file2);
                                         } else {
-                                            System.out.println("应删除[" + file + "]");
-                                            //file.delete();
+                                            // System.out.println("应删除[" + file + "]");
+                                            deleteFiles.add(file);
                                         }
                                     }
                                 }
@@ -351,6 +354,18 @@ public class LocalLogFileHandler {
                         }
                     }
                 }
+            }
+        }
+        for (File deleteFile : deleteFiles) {
+            if (deleteFile.exists()) {
+                System.out.println("正在删除文件[" + deleteFile.getAbsolutePath() + "]...");
+                /*if (deleteFile.delete()) {
+                    System.out.println("删除文件[" + deleteFile.getAbsolutePath() + "]成功");
+                } else {
+                    System.out.println("删除文件[" + deleteFile.getAbsolutePath() + "]失败");
+                }*/
+            } else {
+                System.out.println("文件[" + deleteFile.getAbsolutePath() + "]不存在");
             }
         }
     }
