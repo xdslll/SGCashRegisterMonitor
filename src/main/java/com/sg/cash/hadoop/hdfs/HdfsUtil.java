@@ -750,12 +750,12 @@ public class HdfsUtil {
                                     System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
                                     System.out.println("文件容量:" + file.getLen() + "," + file2.getLen());
                                     if (file.getLen() > file2.getLen()) {
-                                        //System.out.println("应删除[" + p2.getName() + "]");
+                                        System.out.println("应删除[" + p2.getName() + "]");
                                         if (!deleteFiles.contains(p2)) {
                                             deleteFiles.add(p2);
                                         }
                                     } else {
-                                        //System.out.println("应删除[" + p1.getName() + "]");
+                                        System.out.println("应删除[" + p1.getName() + "]");
                                         if (!deleteFiles.contains(p1)) {
                                             deleteFiles.add(p1);
                                         }
