@@ -835,11 +835,11 @@ public class HdfsUtil {
             for (Path deleteFile : deleteFiles) {
                 if (hdfs.exists(deleteFile)) {
                     System.out.println("正在删除文件[" + deleteFile.getName() + "]...");
-                    /*if (hdfs.delete(deleteFile, true)) {
+                    if (hdfs.delete(deleteFile, true)) {
                         System.out.println("删除文件[" + deleteFile.getName() + "]成功");
                     } else {
                         System.out.println("删除文件[" + deleteFile.getName() + "]失败");
-                    }*/
+                    }
                 } else {
                     System.out.println("文件[" + deleteFile + "]不存在");
                 }
