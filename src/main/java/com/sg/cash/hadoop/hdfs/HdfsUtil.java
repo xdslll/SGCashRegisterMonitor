@@ -801,43 +801,35 @@ public class HdfsUtil {
                 return;
             }
             FileStatus[] files = hdfs.listStatus(p);
-            ArrayList<FileStatus> fileList = new ArrayList<>();
-            for (FileStatus f : files) {
-                fileList.add(f);
-            }
-            System.out.println("files.length=" + files.length + ",fileList.size()=" + fileList.size());
-            Iterator<FileStatus> it = fileList.iterator();
-            while (it.hasNext()) {
-                FileStatus file1 = it.next();
+            for (FileStatus file1 : files) {
                 if (!file1.isFile()) {
-                    it.remove();
-                } else {
-                    for (FileStatus file2 : fileList) {
-                        if (file2.isFile()) {
-                            Path p1 = file1.getPath();
-                            Path p2 = file2.getPath();
-                            String fileName1 = getFileName(p1);
-                            String fileName2 = getFileName(p2);
-                            System.out.println("正在比对文件[" + p1.getName() + "]>文件[" + p2.getName() + "]");
-                            if (!fileName1.equals(fileName2) &&
-                                    fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
-                                System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
-                                System.out.println("文件容量:" + file1.getLen() + "," + file2.getLen());
-                                if (file1.getLen() > file2.getLen()) {
-                                    System.out.println("应删除[" + p2.getName() + "]");
-                                    if (!deleteFiles.contains(p2)) {
-                                        deleteFiles.add(p2);
-                                    }
-                                } else {
-                                    System.out.println("应删除[" + p1.getName() + "]");
-                                    if (!deleteFiles.contains(p1)) {
-                                        deleteFiles.add(p1);
-                                    }
+                    continue;
+                }
+                Path p1 = file1.getPath();
+                String fileName1 = getFileName(p1);
+                if (fileName1.endsWith(".Log")) {
+                    System.out.println("需要排查文件[" + p1.getName() + "]");
+                    for (FileStatus file2 : files) {
+                        Path p2 = file2.getPath();
+                        String fileName2 = getFileName(p2);
+                        // System.out.println("正在比对文件[" + p1.getName() + "]>文件[" + p2.getName() + "]");
+                        if (!fileName1.equals(fileName2) &&
+                                fileName1.toLowerCase().equals(fileName2.toLowerCase())) {
+                            System.out.println("发现重复文件:" + p1.getName() + "," + p2.getName());
+                            System.out.println("文件容量:" + file1.getLen() + "," + file2.getLen());
+                            if (file1.getLen() > file2.getLen()) {
+                                System.out.println("应删除[" + p2.getName() + "]");
+                                if (!deleteFiles.contains(p2)) {
+                                    deleteFiles.add(p2);
+                                }
+                            } else {
+                                System.out.println("应删除[" + p1.getName() + "]");
+                                if (!deleteFiles.contains(p1)) {
+                                    deleteFiles.add(p1);
                                 }
                             }
                         }
                     }
-                    it.remove();
                 }
             }
             for (Path deleteFile : deleteFiles) {
