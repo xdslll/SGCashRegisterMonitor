@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class ClientTest {
 
-    @Test
+    //@Test
     public void test() {
         File dir = new File("/Users/apple/Desktop/111");
         System.out.println(dir.getAbsolutePath());
