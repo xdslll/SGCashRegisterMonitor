@@ -213,6 +213,10 @@ public class Client {
             } else if (cmd.equals("sync")) {
                 syncHupu();
             }
+        } else if (type.equals("mysql")) {
+            if (cmd.equals("clear")) {
+                clearMysql();
+            }
         } else if (type.equals("config")) {
             ConfigUtil.showAllConfig();
         } else if (type.equals("clear")) {
@@ -255,11 +259,27 @@ public class Client {
                 "   check      show hupu databases\n" +
                 "   sync       sync data from hupu databases\n" +
                 "\n" +
+                "mysql   control with mysql database\n" +
+                "   clear      clear table in database\n" +
+                "\n" +
                 "clear   clear duplicated file in local and hdfs\n" +
                 "config  show all config\n" +
                 "\n" +
                 "command 'enford help' may show something helpful for you.\n" +
                 "see 'enford help <type>' or 'enford help <command>' to get more informations.\n");
+    }
+
+    private static void clearMysql() {
+        if (!SqoopUtil.clearTable(Client.SQOOP_TABLE_NAME)) {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME + "]失败!");
+        } else {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME + "]成功!");
+        }
+        if (!SqoopUtil.clearTable(Client.SQOOP_TABLE_NAME2)) {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME2 + "]失败!");
+        } else {
+            System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME2 + "]成功!");
+        }
     }
 
     private static void syncHupu() {
