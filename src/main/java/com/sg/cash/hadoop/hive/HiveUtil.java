@@ -413,6 +413,7 @@ public class HiveUtil {
     public void genAvgMachineEffective(Connection conn, String db) {
         Statement stmt = null;
         try {
+            stmt = conn.createStatement();
             // 开始生成收银机报表
             String dropResultAvgMachineEffectSql = "drop table " + db + ".result_avg_machine_effective";
             String createResultAvgMachineEffectSql = "create table result_avg_machine_effective as select " +
@@ -446,6 +447,7 @@ public class HiveUtil {
     public void genAvgCashTime(Connection conn, String db) {
         Statement stmt = null;
         try {
+            stmt = conn.createStatement();
             String dropResultAvgTimeSql = "drop table " + db + ".result_avg_cash_time";
             String createResultAvgTimeSql = "create table " + db + ".result_avg_cash_time as " +
                     "select round((t1.total_time / t1.total_sku), 2) as avg_cash_time, round(t1.total_time, 2) as total_time, " +
