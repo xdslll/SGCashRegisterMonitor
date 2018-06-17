@@ -347,6 +347,8 @@ public class Client {
             hiveUtil.uploadFileToHive(conn, Client.HDFS_REMOTE_URI, Client.HDFS_REMOTE_URI2, Client.HDFS_USER,
                     Client.HDFS_REPORT_INPUT_DIR, Client.HDFS_INTERNAL_URI, Client.HIVE_DB + "." + Client.HIVE_TABLE_LOG);
             System.out.println("上传文件成功");
+            hiveUtil.genAvgCashTime(conn, Client.HIVE_DB);
+            hiveUtil.genAvgMachineEffective(conn, Client.HIVE_DB);
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
