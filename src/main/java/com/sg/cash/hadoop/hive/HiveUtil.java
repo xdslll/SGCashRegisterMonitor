@@ -75,6 +75,24 @@ public class HiveUtil {
                 .toString());
     }
 
+    public boolean createDatabase(Connection conn, String dbName) {
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+            if (!existDatabase(stmt, dbName)) {
+                System.out.println("数据库[" + dbName + "]不存在");
+                return createDatabase(stmt, dbName);
+            } else {
+                System.out.println("数据库[" + dbName + "]已存在");
+            }
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            Client.close(stmt);
+        }
+        return false;
+    }
+
     public boolean useDatabase(Statement stmt, String dbName) throws SQLException {
         return stmt.execute(new StringBuilder()
                 .append("use ")
@@ -390,5 +408,60 @@ public class HiveUtil {
                 }
             }
         });
+    }
+
+    public void uploadFileToHive(Connection conn, String hdfsRemoteUri, String hdfsRemoteUri2,
+                                 String user, String hdfsRootLogPath, String hdfsInternalUri, String tableName) {
+        FileSystem hdfs = null;
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+            String activeHdfsRemoteUri = com.sg.cash.hadoop.hdfs.HdfsUtil.checkActiveHdfs(hdfsRemoteUri, hdfsRemoteUri2, user);
+            System.out.println("当前激活的hdfs uri:" + activeHdfsRemoteUri);
+            if (activeHdfsRemoteUri == null) {
+                throw new IOException("当前无可用的hdfs uri!");
+            }
+            // 生成配置文件
+            Configuration conf = new Configuration();
+            // 生成hdfs对象
+            hdfs = FileSystem.get(
+                    new URI(activeHdfsRemoteUri),
+                    conf,
+                    user
+            );
+            // 如果有文件更新才进行重新计算
+            boolean needUpdate = false;
+            // 生成日志文件根路径
+            Path hdfsLogPath = new Path(hdfsRootLogPath);
+            // 获取根路径下的所有文件
+            FileStatus[] logFileList = hdfs.listStatus(hdfsLogPath);
+            if (logFileList != null && logFileList.length > 0) {
+                needUpdate = true;
+                for (FileStatus file : logFileList) {
+                    // 如果是文件夹则将文件夹下的所有文件导入hive
+                    if (file.isDirectory()) {
+                        FileStatus[] subFileList = hdfs.listStatus(file.getPath());
+                        if (subFileList == null || subFileList.length == 0) {
+                            continue;
+                        }
+                        // 生成hive识别的hdfs路径
+                        String hiveLogPath = new StringBuilder()
+                                .append(hdfsInternalUri)
+                                .append(hdfsRootLogPath)
+                                .append(file.getPath().getName())
+                                .toString();
+                        // 导入数据
+                        importData(stmt, hiveLogPath, tableName, false);
+                    }
+                }
+            } else {
+                System.out.println("文件夹[" + hdfsLogPath + "]下文件为空,无需导入");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            Client.close(hdfs);
+            Client.close(stmt);
+        }
     }
 }

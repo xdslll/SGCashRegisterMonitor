@@ -8,9 +8,12 @@ import com.sg.cash.hadoop.sqlserver.SQLServerHandler;
 import com.sg.cash.hadoop.sqoop.SqoopUtil;
 import com.sg.cash.local.LocalLogFileHandler;
 import com.sg.cash.util.ConfigUtil;
+import org.apache.hadoop.fs.FileSystem;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -327,11 +330,27 @@ public class Client {
         }
     }
 
-    private static void hiveUpload() {
+    /*private static void hiveUpload() {
         if (!HiveUtil.uploadToHiveWarehouse()) {
             System.out.println("上传hive仓库出错!");
         } else {
             System.out.println("上传hive仓库成功!");
+        }
+    }*/
+    private static void hiveUpload() {
+        Connection conn = null;
+        try {
+            HiveUtil hiveUtil = new HiveUtil(Client.HIVE_URL, Client.HIVE_USER, Client.HIVE_PASSWORD);
+            conn = hiveUtil.connect();
+            hiveUtil.createDatabase(conn, "sg2");
+            System.out.println("开始上传文件到[" + Client.HIVE_DB + "." + Client.HIVE_TABLE_LOG + "]");
+            hiveUtil.uploadFileToHive(conn, Client.HDFS_REMOTE_URI, Client.HDFS_REMOTE_URI2, Client.HDFS_USER,
+                    Client.HDFS_REPORT_INPUT_DIR, Client.HDFS_INTERNAL_URI, Client.HIVE_DB + "." + Client.HIVE_TABLE_LOG);
+            System.out.println("上传文件成功");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(conn);
         }
     }
 
@@ -484,6 +503,26 @@ public class Client {
             try {
                 conn.close();
             } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void close(Statement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void close(FileSystem hdfs) {
+        if (hdfs != null) {
+            try {
+                hdfs.close();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
