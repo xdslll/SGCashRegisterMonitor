@@ -353,7 +353,7 @@ public class Client {
             close(conn);
             conn = null;
         }
-        Connection conn2 = null;
+        /*Connection conn2 = null;
         try {
             HiveUtil hiveUtil = new HiveUtil(Client.HIVE_URL, Client.HIVE_USER, Client.HIVE_PASSWORD);
             conn2 = hiveUtil.connect();
@@ -374,7 +374,7 @@ public class Client {
         } finally {
             close(conn3);
             conn3 = null;
-        }
+        }*/
     }
 
     private static void hdfsCheck() {
