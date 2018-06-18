@@ -347,12 +347,33 @@ public class Client {
             hiveUtil.uploadFileToHive(conn, Client.HDFS_REMOTE_URI, Client.HDFS_REMOTE_URI2, Client.HDFS_USER,
                     Client.HDFS_REPORT_INPUT_DIR, Client.HDFS_INTERNAL_URI, Client.HIVE_DB + "." + Client.HIVE_TABLE_LOG);
             System.out.println("上传文件成功");
-            hiveUtil.genAvgCashTime(conn, Client.HIVE_DB);
-            hiveUtil.genAvgMachineEffective(conn, Client.HIVE_DB);
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
             close(conn);
+            conn = null;
+        }
+        Connection conn2 = null;
+        try {
+            HiveUtil hiveUtil = new HiveUtil(Client.HIVE_URL, Client.HIVE_USER, Client.HIVE_PASSWORD);
+            conn2 = hiveUtil.connect();
+            hiveUtil.genAvgCashTime(conn2, Client.HIVE_DB);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(conn2);
+            conn2 = null;
+        }
+        Connection conn3 = null;
+        try {
+            HiveUtil hiveUtil = new HiveUtil(Client.HIVE_URL, Client.HIVE_USER, Client.HIVE_PASSWORD);
+            conn3 = hiveUtil.connect();
+            hiveUtil.genAvgMachineEffective(conn3, Client.HIVE_DB);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            close(conn3);
+            conn3 = null;
         }
     }
 
