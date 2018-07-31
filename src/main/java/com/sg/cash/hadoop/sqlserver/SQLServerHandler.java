@@ -62,6 +62,8 @@ public class SQLServerHandler {
                 "SUBSTRING( b.agt_ip_mac_str , CHARINDEX('(',b.agt_ip_mac_str)+1,16))-1)) f   " +
                 "left join (select APP_AGT_ID,SUM(APP_ACTIVE)/3600 activeTime from [" + dbName + "].dbo.app_report where APP_NAME = 'SellSystem.exe' " +
                 "group by APP_AGT_ID) g on f.APP_AGT_ID = g.APP_AGT_ID";
+        System.out.println("数据库：" + dbName);
+        System.out.println(sql);
         Statement stmt = null;
         ResultSet rs = null;
         ArrayList<HupuData> dataList = new ArrayList<>();
