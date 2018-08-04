@@ -59,7 +59,7 @@ public class MySQLHandler {
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
-            System.out.println(getMachineNoSql);
+            // System.out.println(getMachineNoSql);
             ResultSet rs = stmt.executeQuery(getMachineNoSql);
             if (rs.next()) {
                 String machineNo = rs.getString("machine_no");
@@ -77,7 +77,7 @@ public class MySQLHandler {
                     .append("' and create_dt=")
                     .append(data.getTimestamp())
                     .toString();
-            System.out.println(updateAvgMachineEffectiveSql);
+            // System.out.println(updateAvgMachineEffectiveSql);
             stmt.execute(updateAvgMachineEffectiveSql);
             builder = new StringBuilder();
             String updateMachineRunningSql = builder.append("update result_machine_running set machine_no='")
@@ -90,7 +90,7 @@ public class MySQLHandler {
                     .append(data.getDateStr())
                     .append("'")
                     .toString();
-            System.out.println(updateMachineRunningSql);
+            // System.out.println(updateMachineRunningSql);
             stmt.execute(updateMachineRunningSql);
             r++;
         } catch(Exception ex) {
@@ -130,7 +130,7 @@ public class MySQLHandler {
                 .append(data.getActiveTime())
                 .append(")")
                 .toString();
-        System.out.println(sql);
+        // System.out.println(sql);
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
@@ -138,7 +138,7 @@ public class MySQLHandler {
             r++;
         } catch(Exception ex) {
             // ex.printStackTrace();
-            System.out.println("插入失败，原因：" + ex.getMessage());
+            // System.out.println("插入失败，原因：" + ex.getMessage());
         } finally {
             if (stmt != null) {
                 try {

@@ -60,8 +60,8 @@ public class SQLServerHandler {
                 "SUBSTRING(b.agt_ip_mac_str, CHARINDEX('(', b.AGT_IP_MAC_STR) + 1, CHARINDEX(')', b.AGT_IP_MAC_STR) - CHARINDEX('(', b.AGT_IP_MAC_STR) - 1)) f " +
                 "left join (select APP_AGT_ID,SUM(APP_ACTIVE)/3600 activeTime from [" + dbName + "].dbo.app_report where APP_NAME = 'SellSystem.exe' " +
                 "group by APP_AGT_ID) g on f.APP_AGT_ID = g.APP_AGT_ID";
-        System.out.println("数据库：" + dbName);
-        System.out.println(sql);
+        // System.out.println("数据库：" + dbName);
+        // System.out.println(sql);
         Statement stmt = null;
         ResultSet rs = null;
         ArrayList<HupuData> dataList = new ArrayList<>();
@@ -175,7 +175,7 @@ public class SQLServerHandler {
             for (String db : dbList) {
                 // 获取所有的互普数据
                 List<HupuData> hupuDataList = sqlServerHandler.getHupuData(sqlServerConn, db);
-                System.out.println(hupuDataList);
+                // System.out.println(hupuDataList);
                 // 将互普数据写入MySQL
                 MySQLHandler mySQLHandler = new MySQLHandler(Client.MYSQL_DRIVER_NAME,
                         Client.MYSQL_URL, Client.MYSQL_USER, Client.MYSQL_PASSWORD);
@@ -214,7 +214,7 @@ public class SQLServerHandler {
     public void checkHupuDbNames(Connection conn) {
         String[] dbNames = getHupuDatabaseName(conn);
         for (String dbName : dbNames) {
-            System.out.println(dbName);
+            // System.out.println(dbName);
         }
     }
 }
