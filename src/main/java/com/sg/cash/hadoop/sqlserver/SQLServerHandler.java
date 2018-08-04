@@ -57,7 +57,7 @@ public class SQLServerHandler {
                 "and b.agt_ip_mac_str is not null " +
                 "and b.agt_ip_mac_str<>'' " +
                 "group by a.APP_AGT_ID,a.APP_DATE,b.AGT_NAME,b.agt_grp_id,c.agt_grp_name, " +
-                "SUBSTRING(b.agt_ip_mac_str, CHARINDEX('(', b.AGT_IP_MAC_STR) + 1, CHARINDEX(')', b.AGT_IP_MAC_STR) - CHARINDEX('(', b.AGT_IP_MAC_STR) - 1) f " +
+                "SUBSTRING(b.agt_ip_mac_str, CHARINDEX('(', b.AGT_IP_MAC_STR) + 1, CHARINDEX(')', b.AGT_IP_MAC_STR) - CHARINDEX('(', b.AGT_IP_MAC_STR) - 1)) f " +
                 "left join (select APP_AGT_ID,SUM(APP_ACTIVE)/3600 activeTime from [" + dbName + "].dbo.app_report where APP_NAME = 'SellSystem.exe' " +
                 "group by APP_AGT_ID) g on f.APP_AGT_ID = g.APP_AGT_ID";
         System.out.println("数据库：" + dbName);
