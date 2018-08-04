@@ -47,8 +47,7 @@ public class SQLServerHandler {
     public List<HupuData> getHupuData(Connection conn, String dbName) {
         String sql = "select f.AGT_GRP_ID as group_id, f.AGT_GRP_NAME as group_name, f.APP_AGT_ID as machine_id, f.AGT_NAME as machine_name," +
                 "f.APP_DATE as date_str, f.ips as ip, f.openTime as open_time, g.activeTime as active_time " +
-                "from (select a.APP_AGT_ID,a.APP_DATE,b.AGT_NAME,b.agt_grp_id, SUBSTRING( b.agt_ip_mac_str , CHARINDEX('(',b.agt_ip_mac_str)+1,CHARINDEX(')', " +
-                "SUBSTRING( b.agt_ip_mac_str , CHARINDEX('(',b.agt_ip_mac_str)+1,16))-1) ips, c.agt_grp_name,sum(a.APP_ACTIVE)/3600 openTime " +
+                "from (select a.APP_AGT_ID,a.APP_DATE,b.AGT_NAME,b.agt_grp_id, SUBSTRING(b.agt_ip_mac_str, CHARINDEX('(', b.AGT_IP_MAC_STR) + 1, CHARINDEX(')', b.AGT_IP_MAC_STR) - CHARINDEX('(', b.AGT_IP_MAC_STR) - 1) ips, c.agt_grp_name,sum(a.APP_ACTIVE)/3600 openTime " +
                 "from [" + dbName + "].dbo.APP_REPORT a, " +
                 "[ocular3].dbo.agent b," +
                 "[ocular3].dbo.AGENT_group c " +
@@ -58,8 +57,7 @@ public class SQLServerHandler {
                 "and b.agt_ip_mac_str is not null " +
                 "and b.agt_ip_mac_str<>'' " +
                 "group by a.APP_AGT_ID,a.APP_DATE,b.AGT_NAME,b.agt_grp_id,c.agt_grp_name, " +
-                "SUBSTRING( b.agt_ip_mac_str , CHARINDEX('(',b.agt_ip_mac_str)+1,CHARINDEX(')',  " +
-                "SUBSTRING( b.agt_ip_mac_str , CHARINDEX('(',b.agt_ip_mac_str)+1,16))-1)) f   " +
+                "SUBSTRING(b.agt_ip_mac_str, CHARINDEX('(', b.AGT_IP_MAC_STR) + 1, CHARINDEX(')', b.AGT_IP_MAC_STR) - CHARINDEX('(', b.AGT_IP_MAC_STR) - 1) f " +
                 "left join (select APP_AGT_ID,SUM(APP_ACTIVE)/3600 activeTime from [" + dbName + "].dbo.app_report where APP_NAME = 'SellSystem.exe' " +
                 "group by APP_AGT_ID) g on f.APP_AGT_ID = g.APP_AGT_ID";
         System.out.println("数据库：" + dbName);
