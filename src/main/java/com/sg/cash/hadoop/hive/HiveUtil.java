@@ -135,6 +135,151 @@ public class HiveUtil {
         return r;
     }
 
+    public static boolean uploadStoreFile() {
+        // hive连接对象
+        Connection conn = null;
+        // hive查询对象
+        Statement stmt = null;
+        // hive数据库名称
+        String db = Client.HIVE_DB;
+        // hive日志表
+        String tblLog = Client.HIVE_TABLE_LOG;
+        // hive门店表
+        String tblStore = Client.HIVE_TABLE_STORE;
+        // hive收银机表
+        String tblMachine = Client.HIVE_TABLE_MACHINE;
+        // hdfs对象
+        FileSystem hdfs = null;
+        // hdfs收银机根目录
+        String hdfsRootMachinePath = Client.HDFS_UPLOAD_MACHINE_DIR;
+        // hdfs远程uri
+        String hdfsRemoteUri = Client.HDFS_REMOTE_URI;
+        String hdfsRemoteUri2 = Client.HDFS_REMOTE_URI2;
+        // hdfs内部uri
+        String hdfsInternalUri = Client.HDFS_INTERNAL_URI;
+        // hdfs登录用户
+        String user = Client.HDFS_USER;
+        try {
+            // 初始化hive客户端对象
+            HiveUtil hiveClient = new HiveUtil(Client.HIVE_URL, Client.HIVE_USER, Client.HIVE_PASSWORD);
+            // 连接hive客户端
+            conn = hiveClient.connect();
+            // 获取查询对象
+            stmt = conn.createStatement();
+            // 判断数据库是否存在
+            System.out.println("是否包含[" + db + "]数据库:" + hiveClient.existDatabase(stmt, Client.HIVE_DB));
+            if (!hiveClient.existDatabase(stmt, db)) {
+                System.out.println("创建数据库[" + db + "]");
+                hiveClient.createDatabase(stmt, db);
+                System.out.println("是否包含[" + db + "]数据库:" + hiveClient.existDatabase(stmt, db));
+            }
+            System.out.println(hiveClient.showDatabases(stmt));
+            // 使用数据库
+            hiveClient.useDatabase(stmt, db);
+            // 判断日志表是否存在，如果不存在则进行创建
+            System.out.println("是否包含[" + tblLog + "]表:" + hiveClient.existTable(stmt, tblLog));
+            if (!hiveClient.existTable(stmt, tblLog)) {
+                System.out.println("创建表[" + tblLog + "]");
+                String createLogTableSql = "CREATE TABLE " + db + ".tbl_sg_report_cash_detail (" +
+                        "  create_dt bigint," +
+                        "  id string," +
+                        "  store_no string," +
+                        "  machine_no string," +
+                        "  emp_no string," +
+                        "  emp_name string," +
+                        "  print_page int," +
+                        "  print_line int," +
+                        "  print_begin_time string," +
+                        "  print_end_time string," +
+                        "  ip string," +
+                        "  money int" +
+                        ") row format delimited fields terminated by \"|\"";
+                hiveClient.createTable(stmt, createLogTableSql);
+                System.out.println("是否包含[" + tblLog + "]表:" + hiveClient.existTable(stmt, tblLog));
+            }
+
+            // 判断门店表是否存在，如果不存在则进行创建
+            System.out.println("是否包含[" + tblStore + "]表:" + hiveClient.existTable(stmt, tblStore));
+            if (!hiveClient.existTable(stmt, tblStore)) {
+                System.out.println("创建表[" + tblStore + "]");
+                String createStoreTableSql = "CREATE TABLE " + db + ".tbl_sg_store_info (" +
+                        "  store_no string," +
+                        "  store_name string," +
+                        "  type string," +
+                        "  area string," +
+                        "  city string," +
+                        "  small_area string" +
+                        ") row format delimited fields terminated by \",\"";
+                hiveClient.createTable(stmt, createStoreTableSql);
+                System.out.println("是否包含[" + tblStore + "]表:" + hiveClient.existTable(stmt, tblStore));
+            }
+
+            // 判断收银机表是否存在，如果不存在则进行创建
+            System.out.println("是否包含[" + tblMachine + "]表:" + hiveClient.existTable(stmt, tblMachine));
+            if (!hiveClient.existTable(stmt, tblMachine)) {
+                System.out.println("创建表[" + tblMachine + "]");
+                String createMachineTableSql = "CREATE TABLE " + db + ".tbl_sg_machine_info (" +
+                        "  store_no string," +
+                        "  machine_num int" +
+                        ") row format delimited fields terminated by \",\"";
+                hiveClient.createTable(stmt, createMachineTableSql);
+                System.out.println("是否包含[" + tblMachine + "]表:" + hiveClient.existTable(stmt, tblMachine));
+            }
+
+            System.out.println(hiveClient.showTables(stmt));
+
+            String activeHdfsRemoteUri = com.sg.cash.hadoop.hdfs.HdfsUtil.checkActiveHdfs(hdfsRemoteUri, hdfsRemoteUri2, user);
+            // 生成配置文件
+            Configuration conf = new Configuration();
+            // 生成hdfs对象
+            hdfs = FileSystem.get(
+                    new URI(activeHdfsRemoteUri),
+                    conf,
+                    user
+            );
+            // 生成收银机文件根路径
+            Path hdfsMachinePath = new Path(hdfsRootMachinePath);
+            FileStatus[] machineFileList = hdfs.listStatus(hdfsMachinePath);
+            if (machineFileList != null && machineFileList.length > 0) {
+                // 生成hive识别的hdfs路径
+                String hiveMachinePath = new StringBuilder()
+                        .append(hdfsInternalUri)
+                        .append(hdfsRootMachinePath)
+                        .toString();
+                // 导入数据
+                hiveClient.importData(stmt, hiveMachinePath, db + "." + tblMachine, true);
+            } else {
+                System.out.println("文件夹[" + hdfsMachinePath + "]下文件为空,无需导入");
+            }
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (hdfs != null) {
+                try {
+                    hdfs.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean uploadToHiveWarehouse() {
         // hive连接对象
         Connection conn = null;

@@ -203,6 +203,8 @@ public class Client {
                 hdfsClear();
             } else if (cmd.equals("upload")) {
                 hdfsUpload();
+            } else if (cmd.equals("upload-store")) {
+                hdfsUploadStore();
             }
         } else if (type.equals("hive")) {
             if (cmd.equals("check")) {
@@ -337,6 +339,7 @@ public class Client {
             System.out.println("上传hive仓库成功!");
         }
     }*/
+
     private static void hiveUpload() {
         Connection conn = null;
         try {
@@ -411,6 +414,17 @@ public class Client {
                 LOCAL_CASH_MACHINE_FILE_PATH)) {
             System.out.println("上传门店文件到hdfs出错!");
         }
+    }
+
+    private static void hdfsUploadStore() {
+        String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
+
+        if (!HdfsUtil.uploadMachineFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR,
+                LOCAL_CASH_MACHINE_FILE_PATH)) {
+            System.out.println("上传门店文件到hdfs出错!");
+        }
+
+        HiveUtil.uploadStoreFile();
     }
 
     private static void localClear() {
