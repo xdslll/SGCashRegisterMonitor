@@ -1,5 +1,6 @@
 package com.sg.cash.hadoop.sqlserver;
 
+import com.sg.cash.model.MachineUsage;
 import com.sg.cash.util.BaseDbRunnable;
 import com.sg.cash.util.DBUtil;
 
@@ -138,6 +139,46 @@ public class MySQLHandler {
             r++;
         } catch(Exception ex) {
             // ex.printStackTrace();
+            // System.out.println("插入失败，原因：" + ex.getMessage());
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return r;
+    }
+
+    public int insertUsageData(Connection conn, MachineUsage data) {
+        int r = 0;
+        StringBuilder builder = new StringBuilder();
+        String sql = builder.append("insert into sg_machine_usage values('")
+                .append(data.getCity())
+                .append("','")
+                .append(data.getSmallArea())
+                .append("','")
+                .append(data.getStoreNo())
+                .append("','")
+                .append(data.getStoreName())
+                .append("','")
+                .append(data.getMachineNum())
+                .append("','")
+                .append(data.getUsageNum())
+                .append("','")
+                .append(data.getUsagePercent())
+                .append("')")
+                .toString();
+        System.out.println(sql);
+        Statement stmt = null;
+        try {
+            stmt = conn.createStatement();
+            stmt.execute(sql);
+            r++;
+        } catch(Exception ex) {
+            ex.printStackTrace();
             // System.out.println("插入失败，原因：" + ex.getMessage());
         } finally {
             if (stmt != null) {

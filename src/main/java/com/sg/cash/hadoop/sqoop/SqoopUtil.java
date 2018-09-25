@@ -2,6 +2,7 @@ package com.sg.cash.hadoop.sqoop;
 
 import com.jcraft.jsch.*;
 import com.sg.cash.hadoop.Client;
+import com.sg.cash.model.MachineUsage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.sqoop.Sqoop;
 import org.apache.sqoop.tool.SqoopTool;
@@ -10,10 +11,9 @@ import org.apache.sqoop.util.OptionsFileUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -194,8 +194,8 @@ public class SqoopUtil {
                     "--export-dir", sqoopHiveWarehouse,
                     "-m", "1",
                     "--input-fields-terminated-by", "'001'",
-                    "--input-null-string", "'\\\\N'",
-                    "--input-null-non-string", "'\\\\N'"
+                    "--input-null-string", "'\\\'",
+                    "--input-null-non-string", "'\\\'"
             };
             String[] expandArgs = OptionsFileUtil.expandArguments(args);
             SqoopTool tool = SqoopTool.getTool("export");
@@ -225,6 +225,84 @@ public class SqoopUtil {
         return -1;
     }
 
+    public static List<MachineUsage> genUsageData() {
+        Connection conn = null;
+        Statement stmt = null;
+        String mysqlUrl = Client.MYSQL_URL;
+        String mysqlUser = Client.MYSQL_USER;
+        String mysqlPassword = Client.MYSQL_PASSWORD;
+        try {
+            // 清空现有MySQL数据
+            Class.forName(Client.MYSQL_DRIVER_NAME);
+            conn = DriverManager.getConnection(mysqlUrl, mysqlUser, mysqlPassword);
+            System.out.println("连接mysql数据库成功");
+            stmt = conn.createStatement();
+            System.out.println("生成statement对象成功");
+            String sql = "select * from (" +
+                    "  select city, small_area, store_no, store_name, machine_num, round(sum(usage_num) / count(create_dt), 2) as usage_num, " +
+                    "  round(sum(usage_num) / count(create_dt) / machine_num, 2) as usage_percent " +
+                    "  from (" +
+                    "    select t1.*, t2.usage_num, round(t2.usage_num / t1.machine_num, 2) as usage_percent" +
+                    "    from (" +
+                    "      select city, small_area, store_no, store_name, num as machine_num, create_dt " +
+                    "      from (" +
+                    "        select t1.*, t2.num " +
+                    "        from result_avg_machine_effective as t1" +
+                    "        left join sg_machine as t2 on t1.store_no=t2.store_no" +
+                    "      ) as t1" +
+                    "      group by store_no,create_dt " +
+                    "    ) as t1" +
+                    "    left join (" +
+                    "      select store_no, create_dt, count(*) as usage_num" +
+                    "      from result_avg_cash_time" +
+                    "      group by store_no,create_dt" +
+                    "    ) as t2 on t1.create_dt=t2.create_dt and t1.store_no=t2.store_no" +
+                    "  ) as t1" +
+                    "  group by store_no " +
+                    ") as t1";
+            ResultSet rs = stmt.executeQuery(sql);
+            List<MachineUsage> machineUsageList = new ArrayList<>();
+            while (rs.next()) {
+                String city = rs.getString("city");
+                String smallArea = rs.getString("small_area");
+                String storeNo = rs.getString("store_no");
+                String storeName = rs.getString("store_name");
+                String machineNum = rs.getString("machine_num");
+                String usageNum = rs.getString("usage_num");
+                String usagePercent = rs.getString("usage_percent");
+                MachineUsage machineUsage = new MachineUsage();
+                machineUsage.setCity(city);
+                machineUsage.setSmallArea(smallArea);
+                machineUsage.setStoreNo(storeNo);
+                machineUsage.setStoreName(storeName);
+                machineUsage.setMachineNum(Integer.valueOf(machineNum));
+                machineUsage.setUsageNum(Double.valueOf(usageNum));
+                machineUsage.setUsagePercent(Double.valueOf(usagePercent));
+                machineUsageList.add(machineUsage);
+                System.out.println(machineUsage.toString());
+            }
+            System.out.println(machineUsageList.size());
+            return machineUsageList;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
 
 ///Users/apple/.m2/repository/mysql/mysql-connector-java/5.1.45/mysql-connector-java-5.1.45.jar
