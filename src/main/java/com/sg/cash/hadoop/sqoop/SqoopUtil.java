@@ -275,9 +275,9 @@ public class SqoopUtil {
                 machineUsage.setSmallArea(smallArea);
                 machineUsage.setStoreNo(storeNo);
                 machineUsage.setStoreName(storeName);
-                machineUsage.setMachineNum(Integer.valueOf(machineNum));
-                machineUsage.setUsageNum(Double.valueOf(usageNum));
-                machineUsage.setUsagePercent(Double.valueOf(usagePercent));
+                machineUsage.setMachineNum(machineNum == null ? 0 : Integer.valueOf(machineNum));
+                machineUsage.setUsageNum(usageNum == null ? 0 : Double.valueOf(usageNum));
+                machineUsage.setUsagePercent(usagePercent == null ? 0 : Double.valueOf(usagePercent));
                 machineUsageList.add(machineUsage);
                 System.out.println(machineUsage.toString());
             }
