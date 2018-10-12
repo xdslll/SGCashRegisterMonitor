@@ -288,9 +288,10 @@ public class Client {
                 "   convert    convert file encoding from gbk to utf-8\n" +
                 "\n" +
                 "hdfs    upload data to hadoop platform\n" +
-                "   check      show hdfs status\n" +
-                "   clear      clear duplicated file in hdfs\n" +
-                "   upload     upload files to hdfs\n" +
+                "   check            show hdfs status\n" +
+                "   clear            clear duplicated file in hdfs\n" +
+                "   upload           upload files to hdfs\n" +
+                "   upload-store     upload store files to hdfs\n" +
                 "\n" +
                 "hive    upload data to hive warehouse\n" +
                 "   check      show hive status\n" +
@@ -302,6 +303,7 @@ public class Client {
                 "\n" +
                 "mysql   control with mysql database\n" +
                 "   clear      clear table in database\n" +
+                "   usage      generate machine usage data in database\n" +
                 "\n" +
                 "clear   clear duplicated file in local and hdfs\n" +
                 "config  show all config\n" +
