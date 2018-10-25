@@ -150,6 +150,8 @@ public class HiveUtil {
         String tblMachine = Client.HIVE_TABLE_MACHINE;
         // hdfs对象
         FileSystem hdfs = null;
+        // hdfs门店根目录
+        String hdfsRootStorePath = Client.HDFS_UPLOAD_STORE_DIR;
         // hdfs收银机根目录
         String hdfsRootMachinePath = Client.HDFS_UPLOAD_MACHINE_DIR;
         // hdfs远程uri
@@ -237,6 +239,20 @@ public class HiveUtil {
                     conf,
                     user
             );
+            // 生成门店文件根路径
+            Path hdfsStorePath = new Path(hdfsRootStorePath);
+            FileStatus[] storeFileList = hdfs.listStatus(hdfsStorePath);
+            if (storeFileList != null && storeFileList.length > 0) {
+                // 生成hive识别的hdfs路径
+                String hiveStorePath = new StringBuilder()
+                        .append(hdfsInternalUri)
+                        .append(hdfsRootStorePath)
+                        .toString();
+                // 导入数据
+                hiveClient.importData(stmt, hiveStorePath, db + "." + tblStore, true);
+            } else {
+                System.out.println("文件夹[" + hdfsStorePath + "]下文件为空,无需导入");
+            }
             // 生成收银机文件根路径
             Path hdfsMachinePath = new Path(hdfsRootMachinePath);
             FileStatus[] machineFileList = hdfs.listStatus(hdfsMachinePath);
