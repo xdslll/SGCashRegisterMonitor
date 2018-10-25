@@ -450,12 +450,17 @@ public class Client {
 
         if (!HdfsUtil.uploadMachineFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR,
                 LOCAL_CASH_MACHINE_FILE_PATH)) {
-            System.out.println("上传门店文件到hdfs出错!");
+            System.out.println("上传机器文件到hdfs出错!");
         }
     }
 
     private static void hdfsUploadStore() {
         String activeHdfsRemoteUri = HdfsUtil.checkActiveHdfs(HDFS_REMOTE_URI, HDFS_REMOTE_URI2, HDFS_USER);
+
+        if (!HdfsUtil.uploadStoreFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_STORE_DIR,
+                LOCAL_ORIGINAL_STORE_FILE_PATH, LOCAL_NEW_STORE_FILE_PATH, LOCAL_FINAL_STORE_FILE_PATH)) {
+            System.out.println("上传门店文件到hdfs出错!");
+        }
 
         if (!HdfsUtil.uploadMachineFileToHdfs(activeHdfsRemoteUri, HDFS_USER, HDFS_UPLOAD_MACHINE_DIR,
                 LOCAL_CASH_MACHINE_FILE_PATH)) {
