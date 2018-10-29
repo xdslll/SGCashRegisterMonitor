@@ -14,14 +14,14 @@ public class MachineUsage {
     private Integer machineNum;
     private Double usageNum;
     private Double usagePercent;
-    private Long date;
+    private Long createDt;
 
-    public Long getDate() {
-        return date;
+    public Long getCreateDt() {
+        return createDt;
     }
 
-    public void setDate(Long date) {
-        this.date = date;
+    public void setCreateDt(Long createDt) {
+        this.createDt = createDt;
     }
 
     public String getCity() {
@@ -90,6 +90,7 @@ public class MachineUsage {
                 ", machineNum=" + machineNum +
                 ", usageNum=" + usageNum +
                 ", usagePercent=" + usagePercent +
+                ", createDt=" + createDt +
                 '}';
     }
 }

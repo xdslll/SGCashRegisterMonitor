@@ -317,7 +317,7 @@ public class SqoopUtil {
             System.out.println("连接mysql数据库成功");
             stmt = conn.createStatement();
             System.out.println("生成statement对象成功");
-            String sql = "select t1.city as city, t1.small_area as small_area, t1.store_no as store_no, t1.store_name as store_name, t3.machine_num as machine_num, t2.usage_num as usage_num, round(t2.usage_num / t3.machine_num, 2) as usage_percent, t2.create_dt as date" +
+            String sql = "select t1.city as city, t1.small_area as small_area, t1.store_no as store_no, t1.store_name as store_name, t3.machine_num as machine_num, t2.usage_num as usage_num, round(t2.usage_num / t3.machine_num, 2) as usage_percent, t2.create_dt as create_dt" +
                     " from (" +
                     "   select city, small_area, store_no, store_name, create_dt " +
                     "   from (" +
@@ -345,7 +345,7 @@ public class SqoopUtil {
                 String machineNum = rs.getString("machine_num");
                 String usageNum = rs.getString("usage_num");
                 String usagePercent = rs.getString("usage_percent");
-                String date = rs.getString("date");
+                String createDt = rs.getString("create_dt");
                 MachineUsage machineUsage = new MachineUsage();
                 machineUsage.setCity(city);
                 machineUsage.setSmallArea(smallArea);
@@ -354,7 +354,7 @@ public class SqoopUtil {
                 machineUsage.setMachineNum(machineNum == null ? 0 : Integer.valueOf(machineNum));
                 machineUsage.setUsageNum(usageNum == null ? 0 : Double.valueOf(usageNum));
                 machineUsage.setUsagePercent(usagePercent == null ? 0 : Double.valueOf(usagePercent));
-                machineUsage.setDate(date == null ? 0 : Long.valueOf(date));
+                machineUsage.setCreateDt(createDt == null ? 0 : Long.valueOf(createDt));
                 machineUsageList.add(machineUsage);
                 System.out.println(machineUsage.toString());
             }
