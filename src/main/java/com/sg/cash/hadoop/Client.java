@@ -224,7 +224,8 @@ public class Client {
             if (cmd.equals("clear")) {
                 clearMysql();
             } else if (cmd.equals("usage")) {
-                genUsageData();
+                // genUsageData();
+                genUsageDataDetail();
             }
         } else if (type.equals("config")) {
             ConfigUtil.showAllConfig();
@@ -239,6 +240,38 @@ public class Client {
         }
         long _END = System.currentTimeMillis();
         System.out.println("elapsed time:" + (double) (_END - _START) / 1000 + "s");
+    }
+
+    private static void genUsageDataDetail() {
+        if (SqoopUtil.clearTable("sg_machine_usage")) {
+            System.out.println("清空数据成功");
+            List<MachineUsage> list = SqoopUtil.genUsageDataDetail();
+            Connection mySQLConn = null;
+            try {
+                MySQLHandler mySQLHandler = new MySQLHandler(Client.MYSQL_DRIVER_NAME,
+                        Client.MYSQL_URL, Client.MYSQL_USER, Client.MYSQL_PASSWORD);
+                mySQLConn = mySQLHandler.connect();
+                if (list.size() > 0) {
+                    for (MachineUsage data : list) {
+                        mySQLHandler.insertUsageData(mySQLConn, data);
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                if (mySQLConn != null) {
+                    try {
+                        mySQLConn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            System.out.println("清空数据失败");
+        }
     }
 
     private static void genUsageData() {

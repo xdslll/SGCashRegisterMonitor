@@ -303,6 +303,83 @@ public class SqoopUtil {
             }
         }
     }
+
+    public static List<MachineUsage> genUsageDataDetail() {
+        Connection conn = null;
+        Statement stmt = null;
+        String mysqlUrl = Client.MYSQL_URL;
+        String mysqlUser = Client.MYSQL_USER;
+        String mysqlPassword = Client.MYSQL_PASSWORD;
+        try {
+            // 清空现有MySQL数据
+            Class.forName(Client.MYSQL_DRIVER_NAME);
+            conn = DriverManager.getConnection(mysqlUrl, mysqlUser, mysqlPassword);
+            System.out.println("连接mysql数据库成功");
+            stmt = conn.createStatement();
+            System.out.println("生成statement对象成功");
+            String sql = "select t1.city as city, t1.small_area as small_area, t1.store_no as store_no, t1.store_name as store_name, t3.machine_num as machine_num, t2.usage_num as usage_num, round(t2.usage_num / t3.machine_num, 2) as usage_percent, t2.create_dt as date" +
+                    " from (" +
+                    "   select city, small_area, store_no, store_name, create_dt " +
+                    "   from (" +
+                    "     select t1.*, t2.num " +
+                    "     from result_avg_machine_effective as t1" +
+                    "     left join sg_machine as t2 on t1.store_no=t2.store_no" +
+                    "   ) as t1" +
+                    "   group by store_no,create_dt " +
+                    " ) as t1" +
+                    " left join (" +
+                    "   select store_no, create_dt, count(*) as usage_num" +
+                    "   from result_avg_cash_time" +
+                    "   group by store_no,create_dt" +
+                    " ) as t2 on t1.create_dt=t2.create_dt and t1.store_no=t2.store_no" +
+                    " left join (" +
+                    "   select store_no, num as machine_num from sg_machine" +
+                    " ) as t3 on t1.store_no=t3.store_no;";
+            ResultSet rs = stmt.executeQuery(sql);
+            List<MachineUsage> machineUsageList = new ArrayList<>();
+            while (rs.next()) {
+                String city = rs.getString("city");
+                String smallArea = rs.getString("small_area");
+                String storeNo = rs.getString("store_no");
+                String storeName = rs.getString("store_name");
+                String machineNum = rs.getString("machine_num");
+                String usageNum = rs.getString("usage_num");
+                String usagePercent = rs.getString("usage_percent");
+                String date = rs.getString("date");
+                MachineUsage machineUsage = new MachineUsage();
+                machineUsage.setCity(city);
+                machineUsage.setSmallArea(smallArea);
+                machineUsage.setStoreNo(storeNo);
+                machineUsage.setStoreName(storeName);
+                machineUsage.setMachineNum(machineNum == null ? 0 : Integer.valueOf(machineNum));
+                machineUsage.setUsageNum(usageNum == null ? 0 : Double.valueOf(usageNum));
+                machineUsage.setUsagePercent(usagePercent == null ? 0 : Double.valueOf(usagePercent));
+                machineUsage.setDate(date == null ? 0 : Long.valueOf(date));
+                machineUsageList.add(machineUsage);
+                System.out.println(machineUsage.toString());
+            }
+            System.out.println(machineUsageList.size());
+            return machineUsageList;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
 
 ///Users/apple/.m2/repository/mysql/mysql-connector-java/5.1.45/mysql-connector-java-5.1.45.jar

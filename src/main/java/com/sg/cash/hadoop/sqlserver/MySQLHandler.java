@@ -169,6 +169,8 @@ public class MySQLHandler {
                 .append(data.getUsageNum())
                 .append("','")
                 .append(data.getUsagePercent())
+                .append("','")
+                .append(data.getDate())
                 .append("')")
                 .toString();
         System.out.println(sql);
