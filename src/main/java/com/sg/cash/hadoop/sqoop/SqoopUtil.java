@@ -329,7 +329,7 @@ public class SqoopUtil {
                     " ) as t1" +
                     " left join (" +
                     "   select store_no, create_dt, count(*) as usage_num" +
-                    "   from result_avg_cash_time" +
+                    "   from result_avg_machine_effective" +
                     "   group by store_no,create_dt" +
                     " ) as t2 on t1.create_dt=t2.create_dt and t1.store_no=t2.store_no" +
                     " left join (" +
