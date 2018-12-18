@@ -476,6 +476,16 @@ public class FtpUtil {
             System.out.println("本地累计更新成功总数:" + localFileNumber);
             return true;
         } catch (Exception ex) {
+            System.out.println("同步出错！错误原因：" + ex.getMessage());
+            StackTraceElement[] ste = ex.getStackTrace();
+            if (ste != null && ste.length > 0) {
+                for (int i = 0; i < ste.length; i++) {
+                    System.out.println(ste[i].getFileName() + " " +
+                            ste[i].getClassName() + " " +
+                            ste[i].getMethodName() + " " +
+                            ste[i].getLineNumber());
+                }
+            }
             ex.printStackTrace();
         } finally {
             ftpUtil.destroyFtpClient();
