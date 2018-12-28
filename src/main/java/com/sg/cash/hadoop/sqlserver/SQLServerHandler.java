@@ -186,7 +186,7 @@ public class SQLServerHandler {
                     }
                     // 将互普数据插入mysql
                     mySQLHandler.insertHupuData(mySQLConn, data);
-                    mySQLHandler.updateHupuData(mySQLConn, data);
+                    // mySQLHandler.updateHupuData(mySQLConn, data);
                 }
             }
         } catch (ClassNotFoundException e) {
