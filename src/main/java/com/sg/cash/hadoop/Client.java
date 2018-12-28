@@ -219,6 +219,8 @@ public class Client {
                 checkHupu();
             } else if (cmd.equals("sync")) {
                 syncHupu();
+            } else if (cmd.equals("mysql")) {
+                syncMysqlHupu();
             }
         } else if (type.equals("mysql")) {
             if (cmd.equals("clear")) {
@@ -356,6 +358,10 @@ public class Client {
         } else {
             System.out.println("清空数据表[" + Client.SQOOP_TABLE_NAME2 + "]成功!");
         }
+    }
+
+    private static void syncMysqlHupu() {
+        SQLServerHandler.syncHupuMysqlData();
     }
 
     private static void syncHupu() {

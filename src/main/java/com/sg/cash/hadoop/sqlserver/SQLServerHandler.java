@@ -212,6 +212,36 @@ public class SQLServerHandler {
         }
     }
 
+
+    public static void syncHupuMysqlData() {
+        MySQLHandler mySQLHandler = new MySQLHandler(Client.MYSQL_DRIVER_NAME,
+                Client.MYSQL_URL, Client.MYSQL_USER, Client.MYSQL_PASSWORD);
+        Connection mySQLConn = null;
+        try {
+            mySQLConn = mySQLHandler.connect();
+            System.out.println("开始获取门店号");
+            List<String> storeList = mySQLHandler.getStoreList(mySQLConn);
+            System.out.println(storeList);
+            for (String storeNo : storeList) {
+                System.out.println("开始更新[" + storeNo + "]门店数据");
+                int r = mySQLHandler.updateStore(mySQLConn, storeNo);
+                System.out.println("[" + storeNo + "]门店数据更新成功，共更新 " + r + " 条数据");
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (mySQLConn != null) {
+                try {
+                    mySQLConn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public void checkHupuDbNames(Connection conn) {
         String[] dbNames = getHupuDatabaseName(conn);
         for (String dbName : dbNames) {

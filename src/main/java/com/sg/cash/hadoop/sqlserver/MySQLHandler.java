@@ -5,6 +5,8 @@ import com.sg.cash.util.BaseDbRunnable;
 import com.sg.cash.util.DBUtil;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xiads
@@ -206,5 +208,64 @@ public class MySQLHandler {
                 rs.close();
             }
         });
+    }
+
+    public List<String> getStoreList(Connection conn) {
+        Statement stmt = null;
+        ResultSet rs = null;
+        List<String> storeList = new ArrayList<>();
+        try {
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery("select store_no from result_avg_machine_effective group by store_no");
+            while (rs.next()) {
+              String store = rs.getString("store_no");
+              storeList.add(store);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return storeList;
+    }
+
+    public int updateStore(Connection mySQLConn, String storeNo) {
+        String sql = "update result_avg_machine_effective as t1 " +
+                "left join (select * from result_machine_running where group_name='" + storeNo + "') as t2 on " +
+                "t1.create_dt=t2.`timestamp` and " +
+                "t1.store_no=t2.group_name and " +
+                "t1.ip=t2.ip " +
+                "set t1.launch_time=t2.open_time, t1.program_time=t2.active_time " +
+                "where t1.store_no='" + storeNo + "'";
+        Statement stmt = null;
+        int r = 0;
+        try {
+            stmt = mySQLConn.createStatement();
+            r = stmt.executeUpdate(sql);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return r;
     }
 }
