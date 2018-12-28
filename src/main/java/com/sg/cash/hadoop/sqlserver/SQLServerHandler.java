@@ -173,6 +173,7 @@ public class SQLServerHandler {
             // 获取互普所有数据库名
             String[] dbList = sqlServerHandler.getHupuDatabaseName(sqlServerConn);
             for (String db : dbList) {
+                System.out.println("互普数据库名：" + db);
                 // 获取所有的互普数据
                 List<HupuData> hupuDataList = sqlServerHandler.getHupuData(sqlServerConn, db);
                 // System.out.println(hupuDataList);

@@ -131,7 +131,7 @@ public class MySQLHandler {
                 .append(data.getActiveTime())
                 .append(")")
                 .toString();
-        // System.out.println(sql);
+        System.out.println(sql);
         Statement stmt = null;
         try {
             stmt = conn.createStatement();
